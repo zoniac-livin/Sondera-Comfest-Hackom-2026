@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analyze } from "@/analysis";
 import { analyzeUrl } from "@/analysis/url";
 import { Investigation } from "@/components/Investigation";
+import { DecisionReceipt } from "@/components/DecisionReceipt";
 import { Stepper } from "@/components/ui/stepper";
 import { clearStoredData, getBrowserStorage, loadCase, saveCase } from "@/storage";
 import { getLocalToday } from "@/analysis/contextClock";
@@ -18,7 +19,7 @@ const steps = [
   { name: "Submit", detail: "Share a message or link" },
   { name: "Inspect", detail: "Review what was observed" },
   { name: "Investigate", detail: "Check what is missing" },
-  { name: "Decide & document", detail: "Coming later" },
+  { name: "Decide & document", detail: "Review and export the receipt" },
 ];
 
 const examples = [
@@ -247,17 +248,17 @@ export default function App() {
       <main id="submit">
         <div className="page-heading">
           <div className="eyebrow"><span className="eyebrow-rule" /> LOCAL MESSAGE & LINK CHECKS</div>
-          <h1>{activeStep === 0 ? <>Start with what<br /><span>you received.</span></> : activeStep === 1 ? <>Review what<br /><span>was observed.</span></> : <>Find what is<br /><span>still missing.</span></>}</h1>
+          <h1>{activeStep === 0 ? <>Start with what<br /><span>you received.</span></> : activeStep === 1 ? <>Review what<br /><span>was observed.</span></> : activeStep === 2 ? <>Find what is<br /><span>still missing.</span></> : <>Record what<br /><span>you learned.</span></>}</h1>
           <p className="page-intro">Examine a message or link with clear, local checks. See matched phrases, what remains unknown, and what to consider next.</p>
         </div>
 
         <section className="workspace" aria-label="Investigation workspace">
           <div className="workspace-heading">
-            <div><span className="section-kicker">INVESTIGATION FILE</span><h2>{activeStep === 0 ? "Submit an item" : activeStep === 1 ? "Inspection notes" : "Investigate evidence"}</h2></div>
+            <div><span className="section-kicker">INVESTIGATION FILE</span><h2>{activeStep === 0 ? "Submit an item" : activeStep === 1 ? "Inspection notes" : activeStep === 2 ? "Investigate evidence" : "Decision receipt"}</h2></div>
             <span className="file-tag">NO. 0001 <MessageSquareText size={15} aria-hidden="true" /></span>
           </div>
           {recoveryMessage && <div className="storage-warning" role="status"><span>{recoveryMessage}</span>{!recoveryMessage.includes("could not be cleared") && <button className="quiet-button" type="button" onClick={resetStoredData}>Reset stored data</button>}</div>}
-          <Stepper steps={steps} activeIndex={activeStep} availableThrough={analysis ? 2 : 0} onStepClick={setActiveStep} />
+          <Stepper steps={steps} activeIndex={activeStep} availableThrough={analysis ? 3 : 0} onStepClick={setActiveStep} />
 
           {activeStep === 0 && (
             <section className="submit-panel" aria-labelledby="submit-title">
@@ -348,6 +349,7 @@ export default function App() {
           )}
 
           {analysis && <Investigation analysis={analysis} hidden={activeStep !== 2} caseData={caseData} onEvidenceChange={updateEvidence} onDatesChange={updateDates} onCheckedQuestionsChange={updateCheckedQuestions} onUserNotesChange={updateUserNotes} />}
+          {activeStep === 3 && <DecisionReceipt caseData={caseData} onBack={() => setActiveStep(2)} />}
 
           <aside className="limitation" aria-label="Important limitation">
             <span className="limitation-marker">!</span>

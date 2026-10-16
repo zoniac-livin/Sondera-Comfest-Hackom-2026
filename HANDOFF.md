@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: Phase 6 — local case storage complete
+- Current phase/sub-task: Phase 7 — Decision Receipt complete
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: Owner confirmed Phase 5 and its UI fixes are committed; current Phase 6 work is uncommitted at owner's request.
+- Last commit: Owner confirmed Phase 6 is verified and committed; current Phase 7 work is uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -32,7 +32,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 4 | Done | Submit and Inspect UI wired to the local engine; two engine refinements and regression tests added. |
 | 5 | Done | Context-based Missing-Proof questions, Context Clock, and in-memory evidence-note CRUD; Phase 6 persistence is not included. |
 | 6 | Done | Versioned localStorage autosave/restore, recovery/reset, save status, new case, delete all, and case revision events. |
-| 7 | Not started | Decision Receipt. |
+| 7 | Done | Ordered receipt view, level-aware actions, print/PDF styling, Markdown and schema-versioned JSON exports. |
 | 8 | Not started | Polish and hardening. |
 | 9 | Not started | Demo readiness. |
 
@@ -43,6 +43,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/components/Investigation.tsx`: Phase 5 questions, date clock/timeline, and evidence-note controls.
 - `src/storage/index.ts`: versioned local JSON storage, schema validation, safe load/save/clear operations.
 - `src/storage/index.test.ts`: storage round trip, corrupt JSON, schema mismatch, and storage exception coverage.
+- `src/report/receipt.ts`: receipt data model, truncation, recommendations, Markdown/JSON generation, and export filenames.
+- `src/report/receipt.test.ts`: export tests for truncation, empty evidence, no analysis, and special characters.
+- `src/components/DecisionReceipt.tsx`: Phase 7 receipt sections and print/download actions.
 - `src/types.ts`: shared data types.
 - `src/styles.css`: palette, typography, responsive shell, reduced motion.
 - `src/main.tsx`: React entry and local font imports.
@@ -79,6 +82,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Added Missing-Proof questions, date warnings/timeline, and session-only evidence-note editing; invalid source URLs warn but do not block saving. | Phase 5 scope; no URL is fetched and autosave remains in Phase 6. |
 | 2026-10-16 | Expanded low-severity contact-switch phrases and corrected singular/plural “non-info observation” wording. | Owner-requested small fixes before Phase 5. |
 | 2026-10-16 | Added Phase 6 storage using a versioned JSON blob in localStorage because Dexie is not installed; cases autosave after 500 ms, restore on load, and expose recovery/reset and delete-all actions. | Approved fallback in Section 5.11; no dependency was added. |
+| 2026-10-16 | Replaced the final-step placeholder with an ordered Decision Receipt, local recommended actions, print stylesheet, Markdown export, and schema-versioned JSON export. | Owner-requested Phase 7 scope; no external network calls or Phase 8 work. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -95,7 +99,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Lint: `npm run lint`
 - Analyze: `npm run analyze -- "<text or url>"`
 - Build: `npm run build`
-- Latest results: Phase 6 typecheck, tests (10 files, 129 tests), build, and lint passed. Vite dev server was previously started successfully. Context Clock tests cover invalid, future, old, inconsistent, and delayed dates; Missing-Proof tests cover ordering, the six-question cap, and the always-present author prompt.
+- Latest results: Phase 7 typecheck, tests (11 files, 134 tests), build, and lint passed. Vite dev server was previously started successfully. Context Clock tests cover invalid, future, old, inconsistent, and delayed dates; Missing-Proof tests cover ordering, the six-question cap, and the always-present author prompt.
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
@@ -107,6 +111,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `npm run build`: passed with Vite 6.4.4.
 - Phase 6: `npm run typecheck`, `npm run test` (10 files, 129 tests), `npm run build`, and `npm run lint` all passed.
 - Phase 6 tests cover versioned save/restore, corrupt JSON, schema mismatch, read/write/delete exceptions, app autosave and restore, and delete confirmation.
+- Phase 7: `npm run typecheck`, `npm run test` (11 files, 134 tests), `npm run build`, and `npm run lint` all passed. Receipt export tests cover the 1,000-character limit, empty evidence, absent analysis, and special characters; app tests cover opening the fourth step.
 - Phase 3: typecheck, tests (7 files, 88 tests), build, and lint all passed. The sample CLI invocation returned structured JSON with evidence strings/spans and all seven unavailable-check disclosures.
 - Phase 2 commit `b41398e phase-2: url engine` is recorded in the repository history; the owner confirmed Phase 3 was committed after it.
 - No network access was added to the URL analyzer; all parsing uses the built-in `URL` and `URLSearchParams` APIs and makes no fetch/open calls.
@@ -120,7 +125,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Contrast calculation from the configured palette and 72% dim-text mix passed WCAG AA for all normal-size text tokens on both `--bg` and `--surface` (minimum 5.20:1 for high severity on surface).
 - An in-app browser preview timed out connecting to localhost during Phase 4; Phase 5 UI behavior was verified through UI tests and the production build.
 - Phase 5 targeted UI tests passed for checked questions, date updates, invalid-URL warnings, note CRUD, relationship counts, and repost caveats.
-- Owner confirmed Phase 5 and its UI fixes were committed. Current git status contains Phase 6 app/storage/tests/styles and this handoff update; no commit was made.
+- Owner confirmed Phase 5 and its UI fixes were committed, then confirmed Phase 6 was verified and committed. Current git status contains Phase 7 app/report/tests/styles and this handoff update; no commit was made.
 
 ## 11. Known bugs, gaps and risks
 - Phase 1B is deferred until Gateway Flow source is added.
@@ -130,9 +135,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Phase 6 stores one active case in a versioned localStorage JSON blob. Browser storage limits/unavailability can prevent persistence; the app reports this and retains working state in memory.
 
 ## 12. Next steps
-1. Wait for owner instruction before starting Phase 7.
+1. Wait for owner instruction before starting Phase 8.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
-3. Phase 6 completed local autosave; do not start Phase 7 until the owner requests it.
+3. Phase 7 completed the Decision Receipt; do not start Phase 8 until the owner requests it.
 
 ## 13. Open questions for the owner
 - None for Phase 5. Phase 1B source remains deferred at the owner's request.

@@ -137,4 +137,20 @@ describe("Sondera Submit and Inspect", () => {
     expect(localStorage.getItem("sondera.case.v1")).toBeNull();
     expect(screen.getByRole("textbox", { name: /message, link or claim/i })).toBeTruthy();
   });
+
+  it("opens the real Decision Receipt as the fourth step", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /normal message/i }));
+    await user.click(screen.getByRole("button", { name: /inspect input/i }));
+    await user.click(screen.getByRole("button", { name: /decide & document review and export the receipt/i }));
+    expect(screen.getByRole("heading", { name: "Decision Receipt" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Checks actually performed" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Checks not performed" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Evidence references" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Unresolved questions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /print \/ save as pdf/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Markdown$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^JSON$/i })).toBeTruthy();
+  });
 });

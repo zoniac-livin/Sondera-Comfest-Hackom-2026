@@ -1,5 +1,6 @@
 export type Severity = "info" | "low" | "medium" | "high";
 export type InputType = "message" | "url" | "claim";
+export type AnalysisLevel = "none-found" | "some-indicators" | "multiple-indicators" | "strong-indicators";
 
 export interface Indicator {
   id: string;
@@ -29,7 +30,7 @@ export interface Analysis {
   indicators: Indicator[];
   extractedUrls: ParsedUrl[];
   unavailableChecks: UnavailableCheck[];
-  level: "none-found" | "some-indicators" | "multiple-indicators" | "strong-indicators";
+  level: AnalysisLevel;
   levelExplanation: string;
   missingProof: MissingProofQuestion[];
 }
