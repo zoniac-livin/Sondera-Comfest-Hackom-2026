@@ -1,11 +1,12 @@
 import {
   AlertCircle, ArrowLeft, ArrowRight, CircleAlert, CircleHelp,
-  Info, LockKeyhole, MessageSquareText, ShieldAlert,
-  ShieldCheck, TriangleAlert, type LucideIcon,
+  Info, LockKeyhole, MessageSquareText, Plus, ShieldAlert,
+  TriangleAlert, type LucideIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { analyze } from "@/analysis";
 import { analyzeUrl } from "@/analysis/url";
+import { Investigation } from "@/components/Investigation";
 import { Stepper } from "@/components/ui/stepper";
 import type { Analysis, Indicator, InputType, Severity } from "@/types";
 
@@ -14,7 +15,7 @@ type TypeChoice = "auto" | InputType;
 const steps = [
   { name: "Submit", detail: "Share a message or link" },
   { name: "Inspect", detail: "Review what was observed" },
-  { name: "Investigate", detail: "Coming later" },
+  { name: "Investigate", detail: "Check what is missing" },
   { name: "Decide & document", detail: "Coming later" },
 ];
 
@@ -53,7 +54,7 @@ const severityMeta: Record<Severity, { label: string; Icon: LucideIcon; classNam
 };
 
 const levelMeta: Record<Analysis["level"], { label: string; Icon: LucideIcon; className: string }> = {
-  "none-found": { label: "No indicators found", Icon: ShieldCheck, className: "level-none" },
+  "none-found": { label: "No indicators found", Icon: Info, className: "level-none" },
   "some-indicators": { label: "Some indicators", Icon: CircleAlert, className: "severity-low" },
   "multiple-indicators": { label: "Multiple indicators", Icon: TriangleAlert, className: "severity-medium" },
   "strong-indicators": { label: "Strong indicators", Icon: ShieldAlert, className: "severity-high" },
@@ -166,16 +167,16 @@ export default function App() {
       <main id="submit">
         <div className="page-heading">
           <div className="eyebrow"><span className="eyebrow-rule" /> LOCAL MESSAGE & LINK CHECKS</div>
-          <h1>{activeStep === 0 ? <>Start with what<br /><span>you received.</span></> : <>Review what<br /><span>was observed.</span></>}</h1>
+          <h1>{activeStep === 0 ? <>Start with what<br /><span>you received.</span></> : activeStep === 1 ? <>Review what<br /><span>was observed.</span></> : <>Find what is<br /><span>still missing.</span></>}</h1>
           <p className="page-intro">Examine a message or link with clear, local checks. See matched phrases, what remains unknown, and what to consider next.</p>
         </div>
 
         <section className="workspace" aria-label="Investigation workspace">
           <div className="workspace-heading">
-            <div><span className="section-kicker">INVESTIGATION FILE</span><h2>{activeStep === 0 ? "Submit an item" : "Inspection notes"}</h2></div>
+            <div><span className="section-kicker">INVESTIGATION FILE</span><h2>{activeStep === 0 ? "Submit an item" : activeStep === 1 ? "Inspection notes" : "Investigate evidence"}</h2></div>
             <span className="file-tag">NO. 0001 <MessageSquareText size={15} aria-hidden="true" /></span>
           </div>
-          <Stepper steps={steps} activeIndex={activeStep} />
+          <Stepper steps={steps} activeIndex={activeStep} availableThrough={analysis ? 2 : 0} onStepClick={setActiveStep} />
 
           {activeStep === 0 && (
             <section className="submit-panel" aria-labelledby="submit-title">
@@ -215,7 +216,7 @@ export default function App() {
                 <div className="example-list">
                   {examples.map((example) => (
                     <button className="example-button" key={example.label} onClick={() => loadExample(example.text)} type="button">
-                      <span className="example-marker" aria-hidden="true">+</span>{example.label}
+                      <Plus size={14} className="example-marker" aria-hidden="true" />{example.label}
                     </button>
                   ))}
                 </div>
@@ -251,7 +252,7 @@ export default function App() {
                 {analysis.indicators.length ? (
                   <div className="indicator-list">{sortedIndicators(analysis.indicators).map((indicator, index) => <IndicatorCard key={`${indicator.id}-${indicator.span?.start ?? index}-${index}`} indicator={indicator} index={index} />)}</div>
                 ) : (
-                  <div className="empty-findings"><ShieldCheck size={20} aria-hidden="true" /><p>These local checks found no indicators. This does not mean the content is genuine or safe.</p></div>
+                  <div className="empty-findings"><Info size={20} aria-hidden="true" /><p>These local checks found no indicators. This does not mean the content is genuine or safe.</p></div>
                 )}
               </section>
 
@@ -265,16 +266,17 @@ export default function App() {
             </section>
           )}
 
+          {analysis && <Investigation analysis={analysis} hidden={activeStep !== 2} />}
+
           <aside className="limitation" aria-label="Important limitation">
             <span className="limitation-marker">!</span>
             <p><strong>A note on these checks</strong><br />Automated checks can miss threats and can flag legitimate content. Findings are indicators to consider, not a verdict.</p>
           </aside>
 
-          <div className="step-boundary"><span>INVESTIGATE</span><span>DECIDE & DOCUMENT</span><span className="future-note">LATER PHASES</span></div>
         </section>
       </main>
 
-      <footer className="footer"><span>SONDERA / HACKCOM ’26</span><span>LOCAL BY DESIGN <span className="footer-dot">·</span> EXPLAINABLE BY DEFAULT</span></footer>
+      <footer className="footer"><span>SONDERA / HACKCOM ’26</span><span className="footer-limit">Automated checks can miss threats and can flag legitimate content.</span><span>Your content stays in your browser. Sondera does not send it anywhere.</span></footer>
     </div>
   );
 }

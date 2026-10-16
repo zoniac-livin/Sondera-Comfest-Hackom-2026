@@ -2,6 +2,7 @@ import { analyzeMessage } from "./message";
 import { assessLevel } from "./level";
 import { getUnavailableChecks } from "./unavailable";
 import { analyzeUrl } from "./url";
+import { findMissingProof } from "./missingProof";
 import type { Analysis, InputType, ParsedUrl } from "../types";
 
 function inferInputType(input: string): InputType {
@@ -29,6 +30,12 @@ export function analyze(input: string, inputType: InputType = inferInputType(inp
   }
 
   const level = assessLevel(indicators);
+  const missingProof = findMissingProof({
+    input,
+    inputType,
+    indicators,
+    hasUrl: extractedUrls.length > 0 || indicators.some((indicator) => indicator.category === "url"),
+  });
   return {
     inputType,
     analyzedAt: new Date().toISOString(),
@@ -37,7 +44,6 @@ export function analyze(input: string, inputType: InputType = inferInputType(inp
     unavailableChecks: getUnavailableChecks(),
     level: level.level,
     levelExplanation: level.explanation,
-    // The Missing-Proof Finder is scheduled for Phase 5 in the phase plan.
-    missingProof: [],
+    missingProof,
   };
 }

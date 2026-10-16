@@ -98,7 +98,7 @@ const MESSAGE_RULES: MessageRule[] = [
     explanation: "A request to move a conversation or call a number can shift it away from a channel where the sender is easier to check.",
     patterns: [
       /\b(?:move|switch|continue)\s+(?:this\s+)?(?:conversation|chat)?\s*(?:to|on)\s+(?:whatsapp|telegram)\b/i,
-      /\b(?:message|chat|contact)\s+(?:me\s+)?(?:on|via|through)\s+(?:whatsapp|telegram)\b/i,
+      /\b(?:message|chat|contact)\s+(?:(?:me|us|the\s+team)\s+)?(?:on|via|through)\s+(?:whatsapp|telegram)\b/i,
       /\bcall\s+(?:me|us|this\s+number|the\s+number)\b/i,
     ],
   },

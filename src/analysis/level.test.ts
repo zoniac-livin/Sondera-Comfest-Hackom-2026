@@ -34,4 +34,9 @@ describe("assessLevel", () => {
     expect(result.explanation).toContain("1 high, 1 medium, and 1 low indicators");
     expect(result.explanation).toContain("3 non-info observations");
   });
+
+  it("uses singular observation grammar for one non-info indicator", () => {
+    expect(assessLevel(indicators("info", "low")).explanation).toContain("1 non-info observation).");
+    expect(assessLevel(indicators("info", "medium", "low")).explanation).toContain("2 non-info observations).");
+  });
 });

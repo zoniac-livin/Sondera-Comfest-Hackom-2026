@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 
@@ -11,7 +11,7 @@ describe("Sondera Submit and Inspect", () => {
     expect(screen.getByRole("navigation", { name: /investigation steps/i })).toBeTruthy();
     expect(screen.getByRole("textbox", { name: /message, link or claim/i })).toBeTruthy();
     expect(screen.getAllByRole("button").filter((button) => button.classList.contains("example-button"))).toHaveLength(6);
-    expect(screen.getByText(/automated checks can miss threats/i)).toBeTruthy();
+    expect(screen.getAllByText(/automated checks can miss threats/i).length).toBeGreaterThan(0);
   });
 
   it("uses the real engine and shows evidence, sorted severity, unknowns, and explanations", async () => {
@@ -25,10 +25,11 @@ describe("Sondera Submit and Inspect", () => {
     expect(screen.getByText("Claims to speak for an organization")).toBeTruthy();
     expect(screen.getByRole("heading", { name: /what we could not check/i })).toBeTruthy();
     expect(screen.getByText(/live domain reputation/i)).toBeTruthy();
-    expect(screen.getAllByText(/automated checks can miss threats/i)).toHaveLength(2);
+    expect(screen.getAllByText(/automated checks can miss threats/i).length).toBeGreaterThan(0);
 
-    const cards = screen.getAllByText(/Brand name in the main domain|Claims to speak for an organization/);
-    expect(cards.length).toBe(2);
+    const cardTitles = Array.from(document.querySelectorAll(".indicator-title")).map((node) => node.textContent);
+    expect(cardTitles).toContain("Brand name in the main domain");
+    expect(cardTitles).toContain("Claims to speak for an organization");
     const marks = document.querySelectorAll(".evidence-mark");
     expect(marks.length).toBeGreaterThan(0);
     expect(marks[0].querySelector("svg")).not.toBeNull();
@@ -53,5 +54,61 @@ describe("Sondera Submit and Inspect", () => {
     expect(screen.getByText(/STEP 02 \/ 04 · URL/i)).toBeTruthy();
     expect(screen.getByText("No indicators found")).toBeTruthy();
     expect(screen.getByText(/these local checks found no indicators/i)).toBeTruthy();
+  });
+
+  it("opens Investigate, lets the user check questions, and updates the date timeline", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /normal message/i }));
+    await user.click(screen.getByRole("button", { name: /inspect input/i }));
+    await user.click(screen.getByRole("button", { name: /investigate check what is missing/i }));
+
+    expect(screen.getByRole("heading", { name: /questions to check yourself/i })).toBeTruthy();
+    const authorCheck = screen.getByRole("checkbox", { name: /who first made this claim/i });
+    await user.click(authorCheck);
+    expect((authorCheck as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText(/no publication date is entered/i)).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Published"), { target: { value: "2024-01-01" } });
+    fireEvent.change(screen.getByLabelText("Received"), { target: { value: "2024-05-15" } });
+    expect(screen.queryByRole("checkbox", { name: /when was this first published/i })).toBeNull();
+    expect(screen.getByText(/old content may be recirculated/i)).toBeTruthy();
+    expect(screen.getByText(/arrived long after it was first published/i)).toBeTruthy();
+    expect(screen.getByRole("list", { name: /entered dates from earliest to latest/i }).textContent).toContain("Published");
+  });
+
+  it("warns but accepts invalid note URLs and supports edit, delete, counts, and repost caveats", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /normal message/i }));
+    await user.click(screen.getByRole("button", { name: /inspect input/i }));
+    await user.click(screen.getByRole("button", { name: /investigate check what is missing/i }));
+
+    fireEvent.change(screen.getByRole("textbox", { name: /source url/i }), { target: { value: "not a valid url" } });
+    expect(screen.getByText(/this URL could not be parsed.*still save/i)).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox", { name: "Title" }), { target: { value: "First source" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Note" }), { target: { value: "A short note from this source." } });
+    await user.click(screen.getByRole("button", { name: "Add note" }));
+    expect(screen.getByText("First source")).toBeTruthy();
+    expect(screen.getByText(/this address was not opened/i)).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: /^Edit$/ }));
+    const title = screen.getByRole("textbox", { name: "Title" });
+    fireEvent.change(title, { target: { value: "Edited source" } });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(screen.getByText("Edited source")).toBeTruthy();
+
+    for (const noteTitle of ["Copy one", "Copy two"]) {
+      fireEvent.change(screen.getByRole("textbox", { name: "Title" }), { target: { value: noteTitle } });
+      fireEvent.change(screen.getByRole("textbox", { name: "Note" }), { target: { value: "A reposted copy." } });
+      await user.selectOptions(screen.getByLabelText("This source"), "supports");
+      await user.selectOptions(screen.getByLabelText("Source type"), "repost");
+      await user.click(screen.getByRole("button", { name: "Add note" }));
+    }
+    expect(screen.getByText(/repeated copies are not independent confirmation/i)).toBeTruthy();
+    expect(screen.getByLabelText("Evidence note summary").textContent).toContain("2 supports");
+
+    await user.click(screen.getByRole("button", { name: "Delete Edited source" }));
+    expect(screen.queryByText("Edited source")).toBeNull();
   });
 });

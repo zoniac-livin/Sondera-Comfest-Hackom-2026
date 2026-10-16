@@ -24,8 +24,9 @@ export function assessLevel(indicators: Indicator[]): LevelResult {
   else if (counted.length >= 3 || high >= 1) level = "multiple-indicators";
   else level = "some-indicators";
 
+  const observationCount = `${counted.length} non-info observation${counted.length === 1 ? "" : "s"}`;
   return {
     level,
-    explanation: `${high} high, ${medium} medium, and ${low} low indicators were found by local rules (${counted.length} non-info observations). Informational observations are excluded from this level. ${LIMITATION_NOTICE}`,
+    explanation: `${high} high, ${medium} medium, and ${low} low indicators were found by local rules (${observationCount}). Informational observations are excluded from this level. ${LIMITATION_NOTICE}`,
   };
 }

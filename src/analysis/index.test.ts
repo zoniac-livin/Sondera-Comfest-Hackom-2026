@@ -18,12 +18,12 @@ describe("analysis orchestrator", () => {
     expect(result.extractedUrls).toHaveLength(1);
   });
 
-  it("always includes unavailable checks and a level while leaving Phase 5 questions empty", () => {
+  it("includes unavailable checks, a level, and context-aware Phase 5 questions", () => {
     const result = analyze("A normal note.", "claim");
     expect(result.inputType).toBe("claim");
     expect(result.level).toBe("none-found");
     expect(result.unavailableChecks.length).toBeGreaterThanOrEqual(7);
-    expect(result.missingProof).toEqual([]);
+    expect(result.missingProof.map((question) => question.id)).toEqual(["proof.primary-source", "proof.publication-date", "proof.original-author"]);
     expect(Number.isNaN(Date.parse(result.analyzedAt))).toBe(false);
   });
 });

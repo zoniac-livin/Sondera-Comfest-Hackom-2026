@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: Phase 4 — Submit and Inspect UI complete
+- Current phase/sub-task: Phase 5 — Investigate tools complete
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: `ae3ab84 phase-3: message engine`; current engine fix and Phase 4 UI are uncommitted at owner's request.
+- Last commit: `f185a5e phase-4: submit and inspect ui`; current Phase 5 engine and Investigate work is uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -27,10 +27,10 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 |---|---|---|
 | 1 | Done | Owner confirmed Phase 1 verified and committed. |
 | 1B | Deferred | Owner asked to defer until Gateway Flow source is added to the repo. |
-| 2 | Done | URL parser, deterministic indicators, brand rules, and 43 URL tests implemented; typecheck, tests, and build pass. |
-| 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Missing-Proof Finder remains scheduled for Phase 5 per the phase plan. Owner confirmed Phase 3 is verified and committed. |
+| 2 | Done | URL parser, deterministic indicators, brand rules, and 48 URL tests implemented; typecheck, tests, and build pass. |
+| 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Owner confirmed Phase 3 is verified and committed. |
 | 4 | Done | Submit and Inspect UI wired to the local engine; two engine refinements and regression tests added. |
-| 5 | Not started | Investigate tools. |
+| 5 | Done | Context-based Missing-Proof questions, Context Clock, and in-memory evidence-note CRUD; Phase 6 persistence is not included. |
 | 6 | Not started | Storage. |
 | 7 | Not started | Decision Receipt. |
 | 8 | Not started | Polish and hardening. |
@@ -38,21 +38,23 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 
 ## 6. File map
 - `docs/AGENT_PROMPT.md`: source build prompt, copied verbatim from user-provided file.
-- `src/App.tsx`: Phase 1 app shell and stepper placeholder.
+- `src/App.tsx`: app shell, Submit, and Inspect orchestration.
 - `src/components/ui/stepper.tsx`: reusable journey stepper.
+- `src/components/Investigation.tsx`: Phase 5 questions, date clock/timeline, and evidence-note controls.
 - `src/types.ts`: shared data types.
 - `src/styles.css`: palette, typography, responsive shell, reduced motion.
 - `src/main.tsx`: React entry and local font imports.
-- `src/App.test.tsx`: Phase 1 shell smoke test.
+- `src/App.test.tsx`: Submit, Inspect, and Investigate UI interaction tests.
 - `src/App.tsx`, `src/styles.css`, `src/App.test.tsx`: Phase 4 Submit/Inspect app screens, responsive case-file styling, and interaction tests.
 - `src/analysis/url.ts`: pure URL parser and local indicator rules; never fetches URLs.
 - `src/analysis/brands.ts`: compact India/global brand list and official-domain exclusions.
-- `src/analysis/url.test.ts`: URL-rule tests (43 cases).
-- `src/analysis/message.ts`, `level.ts`, `unavailable.ts`, `index.ts`: Phase 3 local analysis pipeline; inputs are not fetched or transmitted.
-- `src/analysis/message.test.ts`, `level.test.ts`, `unavailable.test.ts`, `index.test.ts`: Phase 3 tests.
+- `src/analysis/url.test.ts`: URL-rule tests (48 cases).
+- `src/analysis/message.ts`, `level.ts`, `unavailable.ts`, `missingProof.ts`, `contextClock.ts`, `index.ts`: local analysis pipeline and Phase 5 pure helpers; inputs are not fetched or transmitted.
+- `src/analysis/message.test.ts`, `level.test.ts`, `unavailable.test.ts`, `missingProof.test.ts`, `contextClock.test.ts`, `index.test.ts`: engine and helper tests.
 - `src/fixtures/samples.ts` and `src/fixtures/samples.test.ts`: representative message samples and benign-message checks.
 - `scripts/analyze.mjs`: local JSON CLI, invoked with `npm run analyze -- "<text or url>"`.
 - `src/analysis/url.ts` adds `url.brand-in-domain` for whole hyphen-separated known-brand tokens in non-official registrable domains. `src/analysis/message.ts` matches organization claims only when a contextual mention is paired with a request or link.
+- `src/analysis/message.ts` recognizes “message/contact us on WhatsApp/Telegram” and “call this number”; level explanations use singular/plural observation grammar.
 - `vite.config.ts`, TypeScript configs, Tailwind/PostCSS and `components.json`: build/tool configuration.
 
 ## 7. Decisions and deviations log
@@ -72,6 +74,8 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Added `url.brand-in-domain` for exact hyphen-delimited brand tokens; strengthened impersonation context matching. | Owner-requested engine refinements before Phase 4. |
 | 2026-10-16 | Built only the Submit and Inspect UI; Step 1B landing page remains deferred, later steps are visibly marked for later phases. | Owner-requested Phase 4 scope; Gateway Flow source remains absent. |
 | 2026-10-16 | Uses the design-system palette and self-hosted fonts with severity icons plus text labels; body-text contrast calculations exceed WCAG AA on both page and panel surfaces. | Required Section 6A accessibility and visual design. |
+| 2026-10-16 | Added Missing-Proof questions, date warnings/timeline, and session-only evidence-note editing; invalid source URLs warn but do not block saving. | Phase 5 scope; no URL is fetched and autosave remains in Phase 6. |
+| 2026-10-16 | Expanded low-severity contact-switch phrases and corrected singular/plural “non-info observation” wording. | Owner-requested small fixes before Phase 5. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -88,7 +92,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Lint: `npm run lint`
 - Analyze: `npm run analyze -- "<text or url>"`
 - Build: `npm run build`
-- Latest results: typecheck passed; tests passed (7 files, 106 tests); build passed; lint passed. Tailwind classes `.min-h-screen`, `.bg-bg`, and `.font-body` were confirmed in generated CSS. Contrast ratios: primary text 16.56:1 on page / 13.64:1 on panel; dim text 9.04:1 / 7.77:1; accent 6.58:1 / 5.42:1; medium 8.82:1 / 7.27:1; high 6.32:1 / 5.20:1. CLI smoke check from Phase 3 remains valid.
+- Latest results: typecheck passed; tests passed (9 files, 123 tests); build passed; lint passed. Vite dev server started successfully. Context Clock tests cover invalid, future, old, inconsistent, and delayed dates; Missing-Proof tests cover ordering, the six-question cap, and the always-present author prompt.
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
@@ -105,22 +109,26 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Owner confirmed Phase 2 is verified and committed as `b41398e`.
 - Owner confirmed Phase 3 is verified and committed as `ae3ab84`.
 - Phase 4 checks: typecheck passed; test passed with 7 files and 106 tests; build passed; lint passed.
+- Phase 5 checks: `npm run typecheck`, `npm run test` (9 files, 123 tests), `npm run build`, and `npm run lint` all passed; `git diff --check` found no whitespace errors.
+- The Phase 5 Vite dev server reached its ready state at `http://localhost:5173/`.
 - Built CSS contains `.min-h-screen`, `.bg-bg`, and `.font-body`, confirming Tailwind scanned the app source and emitted the custom theme utilities.
 - Contrast calculation from the configured palette and 72% dim-text mix passed WCAG AA for all normal-size text tokens on both `--bg` and `--surface` (minimum 5.20:1 for high severity on surface).
-- Attempted to open the running Vite preview in the in-app browser; the browser timed out connecting to localhost, so visual inspection in that browser was unavailable. Automated UI tests and the production build passed.
-- Current git status contains the two engine refinements, Phase 4 UI/tests/styles, and this handoff update; no commit was made.
+- An in-app browser preview timed out connecting to localhost during Phase 4; Phase 5 UI behavior was verified through UI tests and the production build.
+- Phase 5 targeted UI tests passed for checked questions, date updates, invalid-URL warnings, note CRUD, relationship counts, and repost caveats.
+- Current git status contains Phase 5 engine/UI/tests/styles and this handoff update; no commit was made.
 
 ## 11. Known bugs, gaps and risks
 - Phase 1B is deferred until Gateway Flow source is added.
 - Inspect screen highlights rule evidence with underline and icon; cards show severity icon and label and sort high-to-info. Unknown checks remain separate.
 - Registrable-domain extraction is a documented guess based on a small multi-part suffix list, not a public suffix database.
 - Brand rules use a small local list and can miss brands or legitimate domain conventions outside that list. The official-domain map only suppresses lookalike flags; it does not verify domains.
-- Contrast ratios have not yet been measured.
+- Phase 5 evidence notes, checked questions, and dates are kept in React memory only; autosave and restore are Phase 6.
+- Phase 5 evidence notes and date/question state are in React memory only. Autosave/restore is scheduled for Phase 6.
 
 ## 12. Next steps
-1. Wait for owner instruction before starting Phase 5.
+1. Wait for owner instruction before starting Phase 6.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
-3. Phase 5 will implement the Missing-Proof Finder and investigate tools.
+3. Keep all investigation data in memory until Phase 6 storage is requested.
 
 ## 13. Open questions for the owner
-- None for Phase 4. Phase 1B source remains deferred at the owner's request.
+- None for Phase 5. Phase 1B source remains deferred at the owner's request.

@@ -17,6 +17,9 @@ describe("analyzeMessage rule phrases", () => {
     ["forward pressure", "Forward this to 10 people", "msg.forward-pressure", "Please forward the file to Alex."],
     ["excessive punctuation", "Please review this now!!!!", "msg.excess-formatting", "Please review this now!"],
     ["contact switch", "Please message me on WhatsApp", "msg.contact-switch", "I use WhatsApp with my family."],
+    ["message us on WhatsApp", "Message us on WhatsApp", "msg.contact-switch", "We messaged them on WhatsApp yesterday."],
+    ["contact us on Telegram", "Contact us on Telegram", "msg.contact-switch", "We contact our clients at the office."],
+    ["call this number", "Please call this number", "msg.contact-switch", "The number is printed on the receipt."],
   ])("detects %s only with the relevant phrase", (_label, positive, id, negative) => {
     expect(ruleIds(positive)).toContain(id);
     expect(ruleIds(negative)).not.toContain(id);
