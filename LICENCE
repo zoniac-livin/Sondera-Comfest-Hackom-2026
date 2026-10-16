@@ -1,0 +1,44 @@
+Sondera Hackathon-Period License
+
+Copyright (c) 2026 Zoniac-Livin. All rights reserved.
+
+This license applies to the source code, documentation, designs, text and
+other materials in this repository (the "Software").
+
+1. HACKATHON PERIOD
+   The "Hackathon Period" starts when this Software was first published and
+   ends when the organizers of HACKCOM '26 officially announce the final
+   results of the event (17/10/2026).
+
+2. DURING THE HACKATHON PERIOD
+   a) You may view the Software and run it locally only to evaluate it
+      (for example, hackathon organizers and judges).
+   b) You may NOT copy, modify, adapt, redistribute, host, or reuse the
+      Software or any substantial part of it.
+   c) You may NOT submit, present or publish the Software, or anything
+      derived from it, as your own work in HACKCOM '26 or in any other
+      hackathon, competition, course, portfolio or product.
+   d) You may NOT remove or alter this license or any copyright notice.
+   e) Forking on GitHub is allowed only as GitHub's Terms of Service
+      require, and a fork is bound by this same license.
+
+3. AFTER THE END DATE
+   From the day after the End Date, the Software is released under the
+   MIT License, with the copyright notice above.
+
+4. OWNERSHIP
+   All rights not expressly granted are reserved by the copyright holder.
+   Third-party components (such as npm packages and fonts) remain under
+   their own licenses.
+
+5. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED. SONDERA IS AN EDUCATIONAL TOOL AND DOES NOT GUARANTEE THAT
+   ANY MESSAGE, LINK OR CLAIM IS SAFE OR GENUINE. IN NO EVENT SHALL THE
+   COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+   ARISING FROM THE USE OF THE SOFTWARE.
+
+6. TERMINATION
+   Any breach of Section 2 automatically ends the permissions in it.
+
+Contact for permissions: zoniac18@gmail.com
