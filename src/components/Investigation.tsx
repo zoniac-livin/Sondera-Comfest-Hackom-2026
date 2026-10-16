@@ -1,4 +1,4 @@
-import { AlertCircle, Check, CircleHelp, Clock3, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, CircleHelp, Clock3, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { analyzeContextDates, getLocalToday } from "@/analysis/contextClock";
 import { analyzeUrl } from "@/analysis/url";
@@ -106,9 +106,8 @@ export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden
           <ul className="proof-list">
             {visibleQuestions.map((item) => (
               <li className={checkedQuestions.has(item.id) ? "proof-item is-checked" : "proof-item"} key={item.id}>
-                <label className="proof-check">
+                <label className={checkedQuestions.has(item.id) ? "proof-check is-checked" : "proof-check"}>
                   <input type="checkbox" checked={checkedQuestions.has(item.id)} onChange={() => toggleQuestion(item.id)} />
-                  <span className="checkmark" aria-hidden="true"><Check size={13} /></span>
                   <span className="proof-question">{item.question}</span>
                 </label>
                 <p className="proof-why"><strong>Why check:</strong> {item.why}</p>

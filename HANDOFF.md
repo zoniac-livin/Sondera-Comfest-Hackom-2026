@@ -129,6 +129,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 1. Wait for owner instruction before starting Phase 6.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
 3. Keep all investigation data in memory until Phase 6 storage is requested.
+4. When Phase 6 local autosave is implemented, replace “Notes stay in this page session.” with copy that accurately describes local autosave.
 
 ## 13. Open questions for the owner
 - None for Phase 5. Phase 1B source remains deferred at the owner's request.
