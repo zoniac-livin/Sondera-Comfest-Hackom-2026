@@ -41,16 +41,17 @@ function makeIndicator(
 }
 
 function failure(raw: string, reason: string): AnalysisResult {
+  const indicator = makeIndicator(
+    raw,
+    "url.could-not-parse",
+    "info",
+    "Could not parse this address",
+    reason,
+    raw.slice(0, 100),
+  );
   return {
     parsed: null,
-    indicators: [makeIndicator(
-      raw,
-      "url.could-not-parse",
-      "info",
-      "Could not parse this address",
-      reason,
-      raw.slice(0, 100),
-    )],
+    indicators: [{ ...indicator, span: indicator.span ?? { start: 0, end: 0 } }],
   };
 }
 

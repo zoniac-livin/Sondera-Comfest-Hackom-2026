@@ -70,6 +70,9 @@ describe("analyzeUrl", () => {
       expect(() => analyzeUrl(value)).not.toThrow();
       expect(analyzeUrl(value).parsed).toBeNull();
       expect(ids(value)).toContain("url.could-not-parse");
+      const failure = analyzeUrl(value).indicators[0];
+      expect(failure.span).toBeDefined();
+      expect(value.slice(failure.span!.start, failure.span!.end)).toBe(failure.evidence);
     },
   );
 

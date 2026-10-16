@@ -10,6 +10,7 @@
     "typecheck": "tsc -b --pretty",
     "test": "vitest run",
     "test:watch": "vitest",
+    "analyze": "node scripts/analyze.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

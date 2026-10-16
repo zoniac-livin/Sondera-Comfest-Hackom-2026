@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: Phase 2 — URL engine complete
+- Current phase/sub-task: Phase 3 — message engine complete
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: `0728909 phase-1: foundation`; Phase 2 changes are uncommitted at owner's request.
+- Last commit: `b41398e phase-2: url engine`; Phase 3 changes are uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -28,7 +28,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 1 | Done | Owner confirmed Phase 1 verified and committed. |
 | 1B | Deferred | Owner asked to defer until Gateway Flow source is added to the repo. |
 | 2 | Done | URL parser, deterministic indicators, brand rules, and 43 URL tests implemented; typecheck, tests, and build pass. |
-| 3 | Not started | Message analyzer and tests. |
+| 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Missing-Proof Finder remains scheduled for Phase 5 per the phase plan. |
 | 4 | Not started | Submit and Inspect UI. |
 | 5 | Not started | Investigate tools. |
 | 6 | Not started | Storage. |
@@ -47,6 +47,10 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/analysis/url.ts`: pure URL parser and local indicator rules; never fetches URLs.
 - `src/analysis/brands.ts`: compact India/global brand list and official-domain exclusions.
 - `src/analysis/url.test.ts`: URL-rule tests (43 cases).
+- `src/analysis/message.ts`, `level.ts`, `unavailable.ts`, `index.ts`: Phase 3 local analysis pipeline; inputs are not fetched or transmitted.
+- `src/analysis/message.test.ts`, `level.test.ts`, `unavailable.test.ts`, `index.test.ts`: Phase 3 tests.
+- `src/fixtures/samples.ts` and `src/fixtures/samples.test.ts`: representative message samples and benign-message checks.
+- `scripts/analyze.mjs`: local JSON CLI, invoked with `npm run analyze -- "<text or url>"`.
 - `vite.config.ts`, TypeScript configs, Tailwind/PostCSS and `components.json`: build/tool configuration.
 
 ## 7. Decisions and deviations log
@@ -60,6 +64,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Phase 1B deferred. | Owner will add Gateway Flow source later; no landing-page work started. |
 | 2026-10-16 | Lookalike matching limited to brand names of at least five letters, one edit, and common substitutions; official domains are excluded. | Owner-requested reduction in false alarms. |
 | 2026-10-16 | `url.keyword-path` uses `info` severity. | Owner-requested; info observations do not count toward overall levels. |
+| 2026-10-16 | Contextual message rules; generic greeting, contact-switch, and excess-formatting remain low; only non-info indicators affect the overall level. | Owner-requested false-alarm controls. |
+| 2026-10-16 | Added JSON analyze CLI using Vite's SSR module loader without adding dependencies. | Supports local command-line input analysis. |
+| 2026-10-16 | Missing-Proof Finder remains for Phase 5; Phase 3 orchestrator returns an empty missing-proof list. | Phase plan places that feature in Phase 5. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -74,8 +81,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Test watch: `npm run test:watch`
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
+- Analyze: `npm run analyze -- "<text or url>"`
 - Build: `npm run build`
-- Last known results: `npm run typecheck`, `npm run lint`, and `npm run build` passed; `npm run test` passed (2 files, 44 tests: 43 URL cases and one shell smoke test).
+- Latest results: typecheck passed; test passed (7 files, 88 tests); build passed; lint passed. CLI sample `npm run analyze -- "Please share your OTP within 24 hours at https://paypa1.com/login"` printed valid JSON with evidence spans, level, and unavailable checks.
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
@@ -85,21 +93,24 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `npm run typecheck`: passed after Phase 2 changes.
 - `npm run test`: passed, 2 files and 44 tests (43 URL cases plus the Phase 1 smoke test).
 - `npm run build`: passed with Vite 6.4.4.
+- Phase 3: typecheck, tests (7 files, 88 tests), build, and lint all passed. The sample CLI invocation returned structured JSON with evidence strings/spans and all seven unavailable-check disclosures.
+- Phase 3 changes are uncommitted at owner's request; Phase 2 commit `b41398e phase-2: url engine` is the last known phase commit.
 - No network access was added to the URL analyzer; all parsing uses the built-in `URL` and `URLSearchParams` APIs and makes no fetch/open calls.
 - Phase 1B remains deferred; Appendix A and B remain placeholders in the source prompt.
-- Git status contains the handoff, Phase 2 source/tests, and `package.json` script additions; no commit was made.
+- Owner confirmed Phase 2 is verified and committed as `b41398e`.
+- Git status contains Phase 3 source/tests, the CLI/config changes, and this handoff update; no commit was made.
 
 ## 11. Known bugs, gaps and risks
 - Phase 1B is deferred until Gateway Flow source is added.
-- UI currently has a placeholder submit step; no analysis features are implemented.
+- UI currently has a placeholder submit step; the analysis engines exist but are not yet wired into the UI.
 - Registrable-domain extraction is a documented guess based on a small multi-part suffix list, not a public suffix database.
 - Brand rules use a small local list and can miss brands or legitimate domain conventions outside that list. The official-domain map only suppresses lookalike flags; it does not verify domains.
 - Contrast ratios have not yet been measured.
 
 ## 12. Next steps
-1. Wait for owner instruction before starting Phase 3 (message analyzer).
+1. Wait for owner instruction before starting Phase 4.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
-3. If the owner resumes Phase 1B, apply the required local-only edits and verify no third-party requests.
+3. Phase 5 will implement the Missing-Proof Finder and investigate tools.
 
 ## 13. Open questions for the owner
-- None for Phase 2. Phase 1B source remains deferred at the owner's request.
+- None for Phase 3. Phase 1B source remains deferred at the owner's request.
