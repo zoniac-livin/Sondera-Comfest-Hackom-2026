@@ -232,6 +232,20 @@ export function analyzeUrl(raw: string): AnalysisResult {
   }
 
   const registrableLabel = parsed.registrableDomain.split(".")[0] ?? "";
+  const brandToken = registrableLabel.split("-").find((token) =>
+    KNOWN_BRANDS.some((brand) => token === brand.name && !isOfficialDomain(parsed.registrableDomain, brand)),
+  );
+  if (brandToken) {
+    indicators.push(makeIndicator(
+      raw,
+      "url.brand-in-domain",
+      "high",
+      "Brand name in the main domain",
+      `The complete domain label token “${brandToken}” matches a known brand name, but ${parsed.registrableDomain} is not listed as that brand's official domain. This naming clue does not establish who operates the site.`,
+      brandToken,
+    ));
+  }
+
   const lookalikeBrand = KNOWN_BRANDS.find((brand) =>
     brand.name.length >= 5
     && !isOfficialDomain(parsed.registrableDomain, brand)

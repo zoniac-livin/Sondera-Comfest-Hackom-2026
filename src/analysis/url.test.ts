@@ -101,6 +101,21 @@ describe("analyzeUrl", () => {
     expect(ids("https://paypa1.com")).toContain("url.lookalike-brand");
   });
 
+  it.each([
+    ["https://sbi-kyc-update.top", "sbi"],
+    ["https://hdfc-secure.xyz", "hdfc"],
+  ])("detects a whole known brand token in the registrable domain: %s", (value, token) => {
+    const finding = analyzeUrl(value).indicators.find((indicator) => indicator.id === "url.brand-in-domain");
+    expect(finding?.severity).toBe("high");
+    expect(finding?.evidence).toBe(token);
+    expect(value.slice(finding!.span!.start, finding!.span!.end)).toBe(token);
+  });
+
+  it.each(["https://sbi.co.in", "https://mysbiblog.com", "https://hdfcbank.com"]) (
+    "does not flag an official domain or a brand substring: %s",
+    (value) => expect(ids(value)).not.toContain("url.brand-in-domain"),
+  );
+
   it("keeps keyword-path at info severity so it is excluded from levels", () => {
     const keyword = analyzeUrl("https://example.com/login").indicators.find((indicator) => indicator.id === "url.keyword-path");
     expect(keyword?.severity).toBe("info");

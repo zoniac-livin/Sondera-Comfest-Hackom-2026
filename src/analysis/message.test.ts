@@ -42,6 +42,33 @@ describe("analyzeMessage rule phrases", () => {
     expect(result.indicators.filter((indicator) => indicator.severity === "medium" || indicator.severity === "high")).toEqual([]);
   });
 
+  it("combines an organization mention with a request or link for impersonation", () => {
+    const text = "Your SBI account needs KYC. Click https://sbi-kyc-update.top";
+    const result = analyzeMessage(text);
+    expect(ruleIds(text)).toContain("url.brand-in-domain");
+    expect(ruleIds(text)).toContain("msg.impersonation");
+    for (const indicator of result.indicators) {
+      expect(text.slice(indicator.span!.start, indicator.span!.end)).toBe(indicator.evidence);
+    }
+  });
+
+  it.each([
+    "I bank with SBI and use the app to check my balance.",
+    "HDFC Bank's branch is next to the library.",
+    "My friend works at ICICI Bank in Mumbai.",
+    "The India Post newsletter arrived in today's mail.",
+    "I received my Aadhaar letter last month.",
+    "We compared SBI and HDFC Bank services for a school project.",
+  ])("a benign bank or organization mention remains low: %s", (text) => {
+    const result = analyzeMessage(text);
+    expect(result.indicators.filter((indicator) => indicator.severity === "medium" || indicator.severity === "high")).toEqual([]);
+  });
+
+  it.each(["HDFC Bank alert", "Your SBI account", "India Post", "Your Aadhaar"]) (
+    "does not infer impersonation from a bare organization mention: %s",
+    (text) => expect(ruleIds(text)).not.toContain("msg.impersonation"),
+  );
+
   it("recognizes Hinglish urgency and credential requests", () => {
     expect(ruleIds("Abhi verify karo warna account band ho jayega.")).toContain("msg.urgency");
     expect(ruleIds("Apna OTP bhejo abhi.")).toContain("msg.credential-request");

@@ -104,7 +104,8 @@ const MESSAGE_RULES: MessageRule[] = [
   },
 ];
 
-const ORGANIZATION_CLAIM = /\b(?:we\s+are|this\s+is|message\s+from|calling\s+from)\s+(?:(?:your|the)\s+)?(?:bank|sbi|hdfc|icici|axis\s+bank|paytm|phonepe|government|police|courier|delivery\s+(?:company|service)|telecom|mobile\s+provider|employer|customer\s+care|customer\s+support)\b/gi;
+const ORGANIZATION_MENTION = /\b(?:your\s+(?:sbi|hdfc(?:\s+bank)?|icici(?:\s+bank)?|axis(?:\s+bank)?|bank|aadhaar|uidai)(?:\s+(?:account|card|service|kyc))?|(?:sbi|hdfc\s+bank|icici\s+bank|axis\s+bank|paytm|phonepe|bank|government|police|courier|india\s+post|delivery\s+(?:company|service)|telecom|mobile\s+provider|employer|customer\s+(?:care|support)|aadhaar|uidai)\s+(?:alert|notice|message|account|security|support|care|service|verification|kyc)|india\s+post|(?:we\s+are|this\s+is|message\s+from|calling\s+from)\s+(?:your\s+|the\s+)?(?:bank|sbi|hdfc(?:\s+bank)?|icici(?:\s+bank)?|axis(?:\s+bank)?|paytm|phonepe|government|police|courier|india\s+post|delivery\s+(?:company|service)|telecom|mobile\s+provider|employer|customer\s+(?:care|support)|aadhaar|uidai))\b/gi;
+const ACTION_REQUEST = /\b(?:please\s+)?(?:click(?:\s+the)?\s+(?:link|here)|verify\s+(?:your\s+)?(?:account|kyc|details|identity)|update\s+(?:your\s+)?(?:account|kyc|details)|confirm\s+(?:your\s+)?(?:account|details)|complete\s+(?:your\s+)?(?:kyc|verification)|reply\s+(?:with|to)|contact\s+(?:us|me|support)|call\s+(?:us|this\s+number))\b/i;
 const LINK_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"'`]+|\b(?:[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?\.)+[a-z]{2,63}(?::\d{1,5})?(?:\/[^\s<>"'`]*)?(?:\?[^\s<>"'`]*)?(?:#[^\s<>"'`]*)?/gi;
 
 function extractUrls(text: string): UrlMatch[] {
@@ -182,11 +183,11 @@ function addFormattingIndicator(text: string, indicators: Indicator[]): void {
 function addImpersonationIndicator(text: string, indicators: Indicator[], hasUrl: boolean): void {
   const hasRequest = indicators.some((indicator) =>
     indicator.id === "msg.credential-request" || indicator.id === "msg.payment-request",
-  );
+  ) || ACTION_REQUEST.test(text);
   if (!hasUrl && !hasRequest) return;
 
-  ORGANIZATION_CLAIM.lastIndex = 0;
-  const match = ORGANIZATION_CLAIM.exec(text);
+  ORGANIZATION_MENTION.lastIndex = 0;
+  const match = ORGANIZATION_MENTION.exec(text);
   if (!match) return;
   indicators.push({
     id: "msg.impersonation", category: "message", severity: "medium",

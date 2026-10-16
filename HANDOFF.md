@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: Phase 3 — message engine complete
+- Current phase/sub-task: Phase 4 — Submit and Inspect UI complete
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: `b41398e phase-2: url engine`; Phase 3 changes are uncommitted at owner's request.
+- Last commit: `ae3ab84 phase-3: message engine`; current engine fix and Phase 4 UI are uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -28,8 +28,8 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 1 | Done | Owner confirmed Phase 1 verified and committed. |
 | 1B | Deferred | Owner asked to defer until Gateway Flow source is added to the repo. |
 | 2 | Done | URL parser, deterministic indicators, brand rules, and 43 URL tests implemented; typecheck, tests, and build pass. |
-| 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Missing-Proof Finder remains scheduled for Phase 5 per the phase plan. |
-| 4 | Not started | Submit and Inspect UI. |
+| 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Missing-Proof Finder remains scheduled for Phase 5 per the phase plan. Owner confirmed Phase 3 is verified and committed. |
+| 4 | Done | Submit and Inspect UI wired to the local engine; two engine refinements and regression tests added. |
 | 5 | Not started | Investigate tools. |
 | 6 | Not started | Storage. |
 | 7 | Not started | Decision Receipt. |
@@ -44,6 +44,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/styles.css`: palette, typography, responsive shell, reduced motion.
 - `src/main.tsx`: React entry and local font imports.
 - `src/App.test.tsx`: Phase 1 shell smoke test.
+- `src/App.tsx`, `src/styles.css`, `src/App.test.tsx`: Phase 4 Submit/Inspect app screens, responsive case-file styling, and interaction tests.
 - `src/analysis/url.ts`: pure URL parser and local indicator rules; never fetches URLs.
 - `src/analysis/brands.ts`: compact India/global brand list and official-domain exclusions.
 - `src/analysis/url.test.ts`: URL-rule tests (43 cases).
@@ -51,6 +52,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/analysis/message.test.ts`, `level.test.ts`, `unavailable.test.ts`, `index.test.ts`: Phase 3 tests.
 - `src/fixtures/samples.ts` and `src/fixtures/samples.test.ts`: representative message samples and benign-message checks.
 - `scripts/analyze.mjs`: local JSON CLI, invoked with `npm run analyze -- "<text or url>"`.
+- `src/analysis/url.ts` adds `url.brand-in-domain` for whole hyphen-separated known-brand tokens in non-official registrable domains. `src/analysis/message.ts` matches organization claims only when a contextual mention is paired with a request or link.
 - `vite.config.ts`, TypeScript configs, Tailwind/PostCSS and `components.json`: build/tool configuration.
 
 ## 7. Decisions and deviations log
@@ -67,6 +69,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Contextual message rules; generic greeting, contact-switch, and excess-formatting remain low; only non-info indicators affect the overall level. | Owner-requested false-alarm controls. |
 | 2026-10-16 | Added JSON analyze CLI using Vite's SSR module loader without adding dependencies. | Supports local command-line input analysis. |
 | 2026-10-16 | Missing-Proof Finder remains for Phase 5; Phase 3 orchestrator returns an empty missing-proof list. | Phase plan places that feature in Phase 5. |
+| 2026-10-16 | Added `url.brand-in-domain` for exact hyphen-delimited brand tokens; strengthened impersonation context matching. | Owner-requested engine refinements before Phase 4. |
+| 2026-10-16 | Built only the Submit and Inspect UI; Step 1B landing page remains deferred, later steps are visibly marked for later phases. | Owner-requested Phase 4 scope; Gateway Flow source remains absent. |
+| 2026-10-16 | Uses the design-system palette and self-hosted fonts with severity icons plus text labels; body-text contrast calculations exceed WCAG AA on both page and panel surfaces. | Required Section 6A accessibility and visual design. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -83,7 +88,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Lint: `npm run lint`
 - Analyze: `npm run analyze -- "<text or url>"`
 - Build: `npm run build`
-- Latest results: typecheck passed; test passed (7 files, 88 tests); build passed; lint passed. CLI sample `npm run analyze -- "Please share your OTP within 24 hours at https://paypa1.com/login"` printed valid JSON with evidence spans, level, and unavailable checks.
+- Latest results: typecheck passed; tests passed (7 files, 106 tests); build passed; lint passed. Tailwind classes `.min-h-screen`, `.bg-bg`, and `.font-body` were confirmed in generated CSS. Contrast ratios: primary text 16.56:1 on page / 13.64:1 on panel; dim text 9.04:1 / 7.77:1; accent 6.58:1 / 5.42:1; medium 8.82:1 / 7.27:1; high 6.32:1 / 5.20:1. CLI smoke check from Phase 3 remains valid.
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
@@ -94,23 +99,28 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `npm run test`: passed, 2 files and 44 tests (43 URL cases plus the Phase 1 smoke test).
 - `npm run build`: passed with Vite 6.4.4.
 - Phase 3: typecheck, tests (7 files, 88 tests), build, and lint all passed. The sample CLI invocation returned structured JSON with evidence strings/spans and all seven unavailable-check disclosures.
-- Phase 3 changes are uncommitted at owner's request; Phase 2 commit `b41398e phase-2: url engine` is the last known phase commit.
+- Phase 2 commit `b41398e phase-2: url engine` is recorded in the repository history; the owner confirmed Phase 3 was committed after it.
 - No network access was added to the URL analyzer; all parsing uses the built-in `URL` and `URLSearchParams` APIs and makes no fetch/open calls.
 - Phase 1B remains deferred; Appendix A and B remain placeholders in the source prompt.
 - Owner confirmed Phase 2 is verified and committed as `b41398e`.
-- Git status contains Phase 3 source/tests, the CLI/config changes, and this handoff update; no commit was made.
+- Owner confirmed Phase 3 is verified and committed as `ae3ab84`.
+- Phase 4 checks: typecheck passed; test passed with 7 files and 106 tests; build passed; lint passed.
+- Built CSS contains `.min-h-screen`, `.bg-bg`, and `.font-body`, confirming Tailwind scanned the app source and emitted the custom theme utilities.
+- Contrast calculation from the configured palette and 72% dim-text mix passed WCAG AA for all normal-size text tokens on both `--bg` and `--surface` (minimum 5.20:1 for high severity on surface).
+- Attempted to open the running Vite preview in the in-app browser; the browser timed out connecting to localhost, so visual inspection in that browser was unavailable. Automated UI tests and the production build passed.
+- Current git status contains the two engine refinements, Phase 4 UI/tests/styles, and this handoff update; no commit was made.
 
 ## 11. Known bugs, gaps and risks
 - Phase 1B is deferred until Gateway Flow source is added.
-- UI currently has a placeholder submit step; the analysis engines exist but are not yet wired into the UI.
+- Inspect screen highlights rule evidence with underline and icon; cards show severity icon and label and sort high-to-info. Unknown checks remain separate.
 - Registrable-domain extraction is a documented guess based on a small multi-part suffix list, not a public suffix database.
 - Brand rules use a small local list and can miss brands or legitimate domain conventions outside that list. The official-domain map only suppresses lookalike flags; it does not verify domains.
 - Contrast ratios have not yet been measured.
 
 ## 12. Next steps
-1. Wait for owner instruction before starting Phase 4.
+1. Wait for owner instruction before starting Phase 5.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
 3. Phase 5 will implement the Missing-Proof Finder and investigate tools.
 
 ## 13. Open questions for the owner
-- None for Phase 3. Phase 1B source remains deferred at the owner's request.
+- None for Phase 4. Phase 1B source remains deferred at the owner's request.
