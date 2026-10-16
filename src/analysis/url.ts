@@ -128,13 +128,67 @@ function isLookalikeLabel(candidate: string, brand: string): boolean {
     || (label.includes("vv") && label.replace("vv", "w") === name);
 }
 
+function decodePunycodeLabel(label: string): string | undefined {
+  if (!label.startsWith("xn--")) return undefined;
+  const input = label.slice(4);
+  const output: number[] = [];
+  const delimiter = input.lastIndexOf("-");
+  let index = 0;
+  if (delimiter >= 0) {
+    for (const character of input.slice(0, delimiter)) output.push(character.codePointAt(0)!);
+    index = delimiter + 1;
+  }
+  let n = 128;
+  let bias = 72;
+  let i = 0;
+  const digit = (code: number) => code >= 48 && code <= 57 ? code - 22 : code >= 65 && code <= 90 ? code - 65 : code >= 97 && code <= 122 ? code - 97 : 36;
+  const adapt = (deltaValue: number, points: number, first: boolean) => {
+    let delta = first ? Math.floor(deltaValue / 700) : Math.floor(deltaValue / 2);
+    delta += Math.floor(delta / points);
+    let k = 0;
+    while (delta > 455) { delta = Math.floor(delta / 35); k += 36; }
+    return k + Math.floor((36 * delta) / (delta + 38));
+  };
+  while (index < input.length) {
+    const oldI = i;
+    let weight = 1;
+    for (let k = 36; ; k += 36) {
+      if (index >= input.length) return undefined;
+      const value = digit(input.charCodeAt(index++));
+      if (value >= 36) return undefined;
+      i += value * weight;
+      const threshold = k <= bias ? 1 : k >= bias + 26 ? 26 : k - bias;
+      if (value < threshold) break;
+      weight *= 36 - threshold;
+      if (!Number.isSafeInteger(weight) || !Number.isSafeInteger(i)) return undefined;
+    }
+    const count = output.length + 1;
+    bias = adapt(i - oldI, count, oldI === 0);
+    n += Math.floor(i / count);
+    i %= count;
+    if (n > 0x10ffff || (n >= 0xd800 && n <= 0xdfff)) return undefined;
+    output.splice(i, 0, n);
+    i += 1;
+  }
+  try { return String.fromCodePoint(...output); } catch { return undefined; }
+}
+
+function normalizeConfusables(value: string): string {
+  const map: Record<string, string> = {
+    а: "a", е: "e", о: "o", р: "p", с: "c", х: "x", і: "i", ј: "j",
+    к: "k", м: "m", т: "t", в: "b", н: "h", у: "y", ԁ: "d", ӏ: "l",
+  };
+  return [...value.toLowerCase()].map((character) => map[character] ?? character).join("");
+}
+
 function findBrandEvidence(raw: string, values: string[], brand: string): string | undefined {
-  const brandPattern = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const brandPattern = new RegExp(`(?:^|[^a-z0-9])(${escapedBrand})(?=$|[^a-z0-9])`, "i");
   for (const value of values) {
     const match = value.match(brandPattern);
-    if (match?.[0]) {
-      const rawMatch = raw.match(new RegExp(match[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
-      return rawMatch?.[0] ?? match[0];
+    if (match?.[1]) {
+      const rawMatch = raw.match(new RegExp(match[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+      return rawMatch?.[0] ?? match[1];
     }
   }
   return undefined;
@@ -249,7 +303,8 @@ export function analyzeUrl(raw: string): AnalysisResult {
   const lookalikeBrand = KNOWN_BRANDS.find((brand) =>
     brand.name.length >= 5
     && !isOfficialDomain(parsed.registrableDomain, brand)
-    && isLookalikeLabel(registrableLabel, brand.name),
+    && (isLookalikeLabel(registrableLabel, brand.name)
+      || normalizeConfusables(decodePunycodeLabel(registrableLabel) ?? "") === brand.name),
   );
   if (lookalikeBrand) {
     indicators.push(makeIndicator(raw, "url.lookalike-brand", "high", "Domain resembles a known brand", `The domain label is one small spelling or common character-substitution change from “${lookalikeBrand.name}”. Similar spelling is a clue to inspect, not proof of who operates the site.`, registrableLabel));

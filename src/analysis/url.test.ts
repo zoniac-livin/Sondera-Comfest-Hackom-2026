@@ -1,9 +1,46 @@
 import { describe, expect, it } from "vitest";
 import { analyzeUrl } from "./url";
+import { KNOWN_BRANDS } from "./brands";
+import { analyze } from "./index";
 
 const ids = (value: string) => analyzeUrl(value).indicators.map((indicator) => indicator.id);
 
 describe("analyzeUrl", () => {
+  it("maintains a roughly 100-brand official-domain reference set", () => {
+    expect(KNOWN_BRANDS.length).toBeGreaterThanOrEqual(100);
+    expect(KNOWN_BRANDS.length).toBeLessThanOrEqual(120);
+    expect(KNOWN_BRANDS.find((brand) => brand.name === "sbi")?.officialDomains).toContain("onlinesbi.sbi");
+    expect(KNOWN_BRANDS.find((brand) => brand.name === "hdfc")?.officialDomains).toContain("netbanking.hdfcbank.com");
+    expect(KNOWN_BRANDS.find((brand) => brand.name === "incometax")?.officialDomains).toContain("incometax.gov.in");
+  });
+
+  it.each([
+    "https://www.google.com",
+    "https://accounts.google.com/signin",
+    "https://docs.google.com/forms/d/abc",
+    "https://github.com/anthropics",
+    "https://en.wikipedia.org/wiki/Phishing",
+    "https://www.sbi.co.in",
+    "https://onlinesbi.sbi",
+    "https://www.amazon.in",
+  ])("keeps the requested legitimate URL at low or below: %s", (value) => {
+    const result = analyze(value, "url");
+    expect(result.indicators.every((indicator) => ["info", "low"].includes(indicator.severity))).toBe(true);
+    expect(result.level).toBe("none-found");
+  });
+
+  it.each([
+    "http://192.168.0.1/login",
+    "https://google.com@evil.com",
+    "https://xn--pple-43d.com",
+    "https://secure-paypal.com.account-verify.xyz/login",
+    "https://amaz0n.in",
+    "https://hdfc-netbanking-update.top",
+  ])("raises a high indicator for the requested suspicious URL: %s", (value) => {
+    const result = analyze(value, "url");
+    expect(result.indicators.some((indicator) => indicator.severity === "high")).toBe(true);
+  });
+
   it.each([
     ["ordinary HTTPS site", "https://example.com/about", "url.https-note"],
     ["ordinary subdomain", "https://news.example.com/article", "url.https-note"],
