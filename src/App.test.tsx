@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
+
+beforeEach(() => localStorage.clear());
 
 describe("Sondera Submit and Inspect", () => {
   it("shows the two working steps, simple wordmark header, and six examples", () => {
@@ -110,5 +112,29 @@ describe("Sondera Submit and Inspect", () => {
 
     await user.click(screen.getByRole("button", { name: "Delete Edited source" }));
     expect(screen.queryByText("Edited source")).toBeNull();
+  });
+
+  it("autosaves the active case locally and restores it after remount", async () => {
+    const { unmount } = render(<App />);
+    fireEvent.change(screen.getByRole("textbox", { name: /message, link or claim/i }), { target: { value: "A note to keep" } });
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem("sondera.case.v1") ?? "null");
+      expect(stored?.activeCase.input).toBe("A note to keep");
+      expect(stored?.schemaVersion).toBe(1);
+    });
+    expect(screen.getByText(/saved locally at \d\d:\d\d/i)).toBeTruthy();
+    unmount();
+    render(<App />);
+    expect((screen.getByRole("textbox", { name: /message, link or claim/i }) as HTMLTextAreaElement).value).toBe("A note to keep");
+  });
+
+  it("confirms delete-all and clears the stored active case", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /delete all my data/i }));
+    expect(screen.getByRole("alertdialog", { name: /delete all stored data/i })).toBeTruthy();
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: /delete all my data/i }));
+    expect(localStorage.getItem("sondera.case.v1")).toBeNull();
+    expect(screen.getByRole("textbox", { name: /message, link or claim/i })).toBeTruthy();
   });
 });

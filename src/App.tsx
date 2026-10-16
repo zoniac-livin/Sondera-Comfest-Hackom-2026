@@ -3,12 +3,14 @@ import {
   Info, LockKeyhole, MessageSquareText, Plus, ShieldAlert,
   TriangleAlert, type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { analyze } from "@/analysis";
 import { analyzeUrl } from "@/analysis/url";
 import { Investigation } from "@/components/Investigation";
 import { Stepper } from "@/components/ui/stepper";
-import type { Analysis, Indicator, InputType, Severity } from "@/types";
+import { clearStoredData, getBrowserStorage, loadCase, saveCase } from "@/storage";
+import { getLocalToday } from "@/analysis/contextClock";
+import type { Analysis, Case, ContextDates, EvidenceNote, Indicator, InputType, Severity } from "@/types";
 
 type TypeChoice = "auto" | InputType;
 
@@ -104,6 +106,30 @@ function HighlightedInput({ text, indicators }: { text: string; indicators: Indi
   );
 }
 
+function createCase(): Case {
+  const now = new Date().toISOString();
+  const id = globalThis.crypto?.randomUUID?.() ?? `case-${Date.now()}`;
+  return { id, createdAt: now, updatedAt: now, input: "", inputType: "message", evidence: [], dates: { checked: getLocalToday() }, checkedQuestions: [], userNotes: "", revisions: [{ at: now, summary: "Case created" }] };
+}
+
+function addRevision(caseData: Case, summary: string): Case {
+  const at = new Date().toISOString();
+  return { ...caseData, updatedAt: at, revisions: [...caseData.revisions, { at, summary }].slice(-100) };
+}
+
+function initialState(): { activeCase: Case; recoveryMessage: string } {
+  try {
+    const result = loadCase(getBrowserStorage());
+    if (result.status === "loaded") return { activeCase: result.activeCase, recoveryMessage: "" };
+    if (result.status === "recovery") return { activeCase: createCase(), recoveryMessage: result.reason };
+  } catch {
+    return { activeCase: createCase(), recoveryMessage: "Browser storage is unavailable. Your current work will stay in memory." };
+  }
+  return { activeCase: createCase(), recoveryMessage: "" };
+}
+
+function clockTime(date: Date): string { return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`; }
+
 function SeverityLabel({ severity }: { severity: Severity }) {
   const { label, Icon, className } = severityMeta[severity];
   return <span className={`severity-label ${className}`}><Icon size={15} strokeWidth={2} aria-hidden="true" />{label}</span>;
@@ -126,42 +152,96 @@ function IndicatorCard({ indicator, index }: { indicator: Indicator; index: numb
 }
 
 export default function App() {
-  const [activeStep, setActiveStep] = useState(0);
-  const [input, setInput] = useState("");
-  const [typeChoice, setTypeChoice] = useState<TypeChoice>("auto");
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [initial] = useState(initialState);
+  const [caseData, setCaseData] = useState<Case>(initial.activeCase);
+  const [recoveryMessage, setRecoveryMessage] = useState(initial.recoveryMessage);
+  const [activeStep, setActiveStep] = useState(initial.activeCase.analysis ? 1 : 0);
+  const [typeChoice, setTypeChoice] = useState<TypeChoice>(initial.activeCase.inputType);
+  const [saveState, setSaveState] = useState<"saving" | "saved" | "error">(initial.recoveryMessage ? "error" : "saving");
+  const [savedAt, setSavedAt] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [formError, setFormError] = useState("");
+  const skipSave = useRef(false);
+  const input = caseData.input;
+  const analysis = caseData.analysis ?? null;
   const inferredType = useMemo(() => detectType(input), [input]);
+
+  useEffect(() => {
+    if (recoveryMessage) return;
+    if (skipSave.current) { skipSave.current = false; return; }
+    setSaveState("saving");
+    const timeout = window.setTimeout(() => {
+      try {
+        saveCase(getBrowserStorage(), caseData);
+        setSavedAt(clockTime(new Date()));
+        setSaveState("saved");
+      } catch {
+        setSaveState("error");
+        setRecoveryMessage("Browser storage is unavailable or full. Your current work is still available in this page, but it could not be saved locally.");
+      }
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [caseData, recoveryMessage]);
+
+  const updateInput = (value: string) => setCaseData((current) => ({ ...current, input: value, analysis: undefined, updatedAt: new Date().toISOString() }));
+  const updateTypeChoice = (choice: TypeChoice) => {
+    setTypeChoice(choice);
+    setCaseData((current) => ({ ...current, inputType: choice === "auto" ? inferredType : choice, analysis: undefined, updatedAt: new Date().toISOString() }));
+  };
+  const startNewCase = () => {
+    setCaseData(createCase()); setTypeChoice("auto"); setRecoveryMessage(""); setSaveState("saving"); setActiveStep(0); setFormError("");
+  };
+  const resetStoredData = () => {
+    try {
+      clearStoredData(getBrowserStorage());
+      skipSave.current = true;
+      setCaseData(createCase()); setTypeChoice("auto"); setActiveStep(0); setRecoveryMessage(""); setSaveState("saved"); setSavedAt(""); setConfirmDelete(false); setFormError("");
+    } catch {
+      setSaveState("error"); setRecoveryMessage("Stored data could not be cleared because browser storage is unavailable."); setConfirmDelete(false);
+    }
+  };
 
   const runAnalysis = () => {
     if (!input.trim()) {
       setFormError("Paste a message, link, or claim first.");
       return;
     }
-    const result = analyze(input, typeChoice === "auto" ? inferredType : typeChoice);
-    setAnalysis(result);
+    const selectedType = typeChoice === "auto" ? inferredType : typeChoice;
+    const result = analyze(input, selectedType);
+    setCaseData((current) => addRevision({ ...current, inputType: selectedType, analysis: result }, "Analysis run"));
     setFormError("");
     setActiveStep(1);
   };
 
   const loadExample = (text: string) => {
-    setInput(text);
+    updateInput(text);
     setTypeChoice("auto");
-    setAnalysis(null);
     setFormError("");
   };
 
   const editInput = () => {
-    setAnalysis(null);
+    setCaseData((current) => ({ ...current, analysis: undefined, updatedAt: new Date().toISOString() }));
     setActiveStep(0);
   };
+
+  const updateEvidence = (evidence: EvidenceNote[], revision?: string) => setCaseData((current) => revision
+    ? addRevision({ ...current, evidence }, revision)
+    : { ...current, evidence, updatedAt: new Date().toISOString() });
+  const updateDates = (dates: ContextDates) => setCaseData((current) => addRevision({ ...current, dates }, "Dates edited"));
+  const updateCheckedQuestions = (checkedQuestions: string[]) => setCaseData((current) => ({ ...current, checkedQuestions, updatedAt: new Date().toISOString() }));
+  const updateUserNotes = (userNotes: string) => setCaseData((current) => ({ ...current, userNotes, updatedAt: new Date().toISOString() }));
 
   return (
     <div className="app-shell min-h-screen bg-bg font-body text-text antialiased">
       <header className="topbar">
         <a className="wordmark" href="#submit" aria-label="Sondera — start an investigation">SONDERA<span className="wordmark-mark">/</span></a>
         <p className="header-tagline">Know what you know. <span>Find what you don’t.</span></p>
-        <div className="case-ref"><LockKeyhole size={14} aria-hidden="true" /><span>PRIVATE WORKSPACE</span><span className="case-number">CASE 0001</span></div>
+        <div className="case-tools">
+          <span className={`save-state-chip ${saveState === "error" ? "save-error" : ""}`} aria-live="polite">{saveState === "saving" ? "Saving…" : saveState === "error" ? "Could not save" : savedAt ? `Saved locally at ${savedAt}` : "Saved locally"}</span>
+          <button className="quiet-button" type="button" onClick={startNewCase}>New case</button>
+          <button className="quiet-button delete-note" type="button" onClick={() => setConfirmDelete(true)}>Delete all my data</button>
+          <span className="case-ref"><LockKeyhole size={14} aria-hidden="true" />PRIVATE WORKSPACE<span className="case-number">CASE {caseData.id.slice(-4).toUpperCase()}</span></span>
+        </div>
       </header>
 
       <main id="submit">
@@ -176,6 +256,7 @@ export default function App() {
             <div><span className="section-kicker">INVESTIGATION FILE</span><h2>{activeStep === 0 ? "Submit an item" : activeStep === 1 ? "Inspection notes" : "Investigate evidence"}</h2></div>
             <span className="file-tag">NO. 0001 <MessageSquareText size={15} aria-hidden="true" /></span>
           </div>
+          {recoveryMessage && <div className="storage-warning" role="status"><span>{recoveryMessage}</span>{!recoveryMessage.includes("could not be cleared") && <button className="quiet-button" type="button" onClick={resetStoredData}>Reset stored data</button>}</div>}
           <Stepper steps={steps} activeIndex={activeStep} availableThrough={analysis ? 2 : 0} onStepClick={setActiveStep} />
 
           {activeStep === 0 && (
@@ -187,7 +268,7 @@ export default function App() {
                 className="input-area"
                 value={input}
                 maxLength={20_000}
-                onChange={(event) => { setInput(event.target.value); setAnalysis(null); setFormError(""); }}
+                onChange={(event) => { updateInput(event.target.value); setFormError(""); }}
                 placeholder="Paste the message or link here…"
                 aria-describedby="input-help input-count"
               />
@@ -203,7 +284,7 @@ export default function App() {
                     ["claim", "Claim", "Online statement"],
                   ] as [TypeChoice, string, string][]).map(([value, label, hint]) => (
                     <label className={`type-option ${typeChoice === value ? "is-selected" : ""}`} key={value}>
-                      <input type="radio" name="input-type" value={value} checked={typeChoice === value} onChange={() => setTypeChoice(value)} />
+                      <input type="radio" name="input-type" value={value} checked={typeChoice === value} onChange={() => updateTypeChoice(value)} />
                       <span className="radio-mark" aria-hidden="true" />
                       <span className="type-copy"><strong>{label}</strong><small>{hint}</small></span>
                     </label>
@@ -266,7 +347,7 @@ export default function App() {
             </section>
           )}
 
-          {analysis && <Investigation analysis={analysis} hidden={activeStep !== 2} />}
+          {analysis && <Investigation analysis={analysis} hidden={activeStep !== 2} caseData={caseData} onEvidenceChange={updateEvidence} onDatesChange={updateDates} onCheckedQuestionsChange={updateCheckedQuestions} onUserNotesChange={updateUserNotes} />}
 
           <aside className="limitation" aria-label="Important limitation">
             <span className="limitation-marker">!</span>
@@ -277,6 +358,7 @@ export default function App() {
       </main>
 
       <footer className="footer"><span>SONDERA / HACKCOM ’26</span><span className="footer-limit">Automated checks can miss threats and can flag legitimate content.</span><span>Your content stays in your browser. Sondera does not send it anywhere.</span></footer>
+      {confirmDelete && <div className="confirm-backdrop"><section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-description"><h3 id="delete-title">Delete all stored data?</h3><p id="delete-description">This clears the saved case from this browser and starts a blank case. This cannot be undone.</p><div><button className="quiet-button" type="button" onClick={() => setConfirmDelete(false)}>Cancel</button><button className="secondary-button danger-button" type="button" onClick={resetStoredData}>Delete all my data</button></div></section></div>}
     </div>
   );
 }

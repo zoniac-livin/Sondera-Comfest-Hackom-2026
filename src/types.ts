@@ -42,6 +42,6 @@ export interface EvidenceNote {
 export interface ContextDates { published?: string; event?: string; received?: string; checked: string }
 export interface Case {
   id: string; createdAt: string; updatedAt: string; input: string; inputType: InputType;
-  analysis?: Analysis; evidence: EvidenceNote[]; dates: ContextDates; userNotes: string;
+  analysis?: Analysis; evidence: EvidenceNote[]; dates: ContextDates; checkedQuestions: string[]; userNotes: string;
   revisions: { at: string; summary: string }[];
 }

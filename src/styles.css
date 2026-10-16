@@ -30,6 +30,18 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visib
 button { color: inherit; }
 .app-shell { max-width: 1440px; min-height: 100vh; margin: 0 auto; padding: 0 clamp(22px, 6.25vw, 96px); display: flex; flex-direction: column; }
 .topbar { min-height: 82px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
+.case-tools { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.case-tools .case-ref { flex-basis: 100%; }
+.save-state-chip { display: inline-flex; align-items: center; min-height: 30px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 3px; color: var(--accent); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.save-state-chip.save-error { border-color: var(--severity-medium); color: var(--severity-medium); }
+.storage-warning { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 16px 0; padding: 12px 14px; border: 1px solid var(--severity-medium); color: var(--text); background: rgb(217 178 111 / 9%); font-size: 15px; }
+.confirm-backdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / 68%); }
+.confirm-dialog { width: min(100%, 470px); padding: 24px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); box-shadow: 0 18px 60px rgb(0 0 0 / 35%); }
+.confirm-dialog h3 { font-size: 24px; }
+.confirm-dialog p { margin: 12px 0 20px; color: var(--text-dim); font-size: 16px; }
+.confirm-dialog > div { display: flex; justify-content: flex-end; align-items: center; gap: 15px; }
+.danger-button { border-color: var(--severity-high); color: var(--text); }
+.danger-button:hover { border-color: var(--severity-high); background: rgb(226 128 111 / 14%); }
 .wordmark { width: max-content; font: 400 24px/1 Anton, Impact, "Arial Narrow", sans-serif; letter-spacing: .075em; text-decoration: none; }
 .wordmark-mark { color: var(--accent); margin-left: 3px; }
 .header-tagline { margin: 0; justify-self: center; color: var(--text); font-size: 15px; white-space: nowrap; }
@@ -232,6 +244,8 @@ button.step:disabled { cursor: default; }
 @media (max-width: 760px) {
   .app-shell { padding-inline: 22px; }
   .topbar { grid-template-columns: auto 1fr; min-height: 70px; }
+  .case-tools { min-width: 0; gap: 6px 10px; }
+  .case-tools .case-ref { display: none; }
   .header-tagline { display: none; }
   .stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .step { padding: 11px 6px 11px 0; }

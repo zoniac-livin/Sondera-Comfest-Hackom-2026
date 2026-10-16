@@ -2,7 +2,7 @@ import { AlertCircle, CircleHelp, Clock3, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { analyzeContextDates, getLocalToday } from "@/analysis/contextClock";
 import { analyzeUrl } from "@/analysis/url";
-import type { Analysis, ContextDates, EvidenceNote } from "@/types";
+import type { Analysis, Case, ContextDates, EvidenceNote } from "@/types";
 
 type NoteDraft = Omit<EvidenceNote, "id">;
 
@@ -26,11 +26,17 @@ function sourceUrlIsParsable(value: string): boolean {
   return parsed !== null && (parsed.protocol === "http:" || parsed.protocol === "https:");
 }
 
-export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden: boolean }) {
+export function Investigation({ analysis, hidden, caseData, onEvidenceChange, onDatesChange, onCheckedQuestionsChange, onUserNotesChange }: {
+  analysis: Analysis; hidden: boolean; caseData: Case;
+  onEvidenceChange: (notes: EvidenceNote[], revision?: string) => void;
+  onDatesChange: (dates: ContextDates) => void;
+  onCheckedQuestionsChange: (ids: string[]) => void;
+  onUserNotesChange: (notes: string) => void;
+}) {
   const today = getLocalToday();
-  const [checkedQuestions, setCheckedQuestions] = useState<Set<string>>(() => new Set());
-  const [dates, setDates] = useState<ContextDates>(() => ({ checked: today }));
-  const [notes, setNotes] = useState<EvidenceNote[]>([]);
+  const checkedQuestions = new Set(caseData.checkedQuestions);
+  const dates = caseData.dates;
+  const notes = caseData.evidence;
   const [draft, setDraft] = useState<NoteDraft>(() => newDraft(today));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState("");
@@ -45,16 +51,14 @@ export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden
     : analysis.missingProof;
 
   const toggleQuestion = (id: string) => {
-    setCheckedQuestions((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(checkedQuestions);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onCheckedQuestionsChange([...next]);
   };
 
   const updateDate = (field: "published" | "event" | "received", value: string) => {
-    setDates((current) => ({ ...current, [field]: value || undefined, checked: today }));
+    onDatesChange({ ...dates, [field]: value || undefined, checked: today });
   };
 
   const updateDraft = <K extends keyof NoteDraft>(field: K, value: NoteDraft[K]) => {
@@ -64,9 +68,9 @@ export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden
   const saveNote = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const updated: EvidenceNote = { ...draft, id: editingId ?? createId() };
-    setNotes((current) => editingId
-      ? current.map((note) => note.id === editingId ? updated : note)
-      : [...current, updated]);
+    onEvidenceChange(editingId
+      ? notes.map((note) => note.id === editingId ? updated : note)
+      : [...notes, updated], editingId ? "Evidence note updated" : "Evidence added");
     setFormMessage(editingId ? "Evidence note updated in this session." : "Evidence note added in this session.");
     setEditingId(null);
     setDraft(newDraft(today));
@@ -85,7 +89,7 @@ export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden
   };
 
   const deleteNote = (id: string) => {
-    setNotes((current) => current.filter((note) => note.id !== id));
+    onEvidenceChange(notes.filter((note) => note.id !== id), "Evidence note removed");
     if (editingId === id) cancelEdit();
     setFormMessage("Evidence note removed from this session.");
   };
@@ -175,7 +179,7 @@ export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden
         )}
 
         <form className="evidence-form" onSubmit={saveNote}>
-          <div className="form-heading"><h5>{editingId ? "Edit evidence note" : "Add an evidence note"}</h5><span>Notes stay in this page session.</span></div>
+          <div className="form-heading"><h5>{editingId ? "Edit evidence note" : "Add an evidence note"}</h5><span>Saved locally in this browser.</span></div>
           <label className="note-field"><span>Source URL <small>optional</small></span><input type="text" inputMode="url" value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://example.org/source" />
             {invalidSource && <span className="url-warning" role="status">This URL could not be parsed. You can still save this note; it will not be opened or fetched.</span>}
             {!draft.sourceUrl.trim() && <span className="field-hint">The source URL is never opened or fetched.</span>}
@@ -193,6 +197,11 @@ export function Investigation({ analysis, hidden }: { analysis: Analysis; hidden
             <button className="secondary-button" type="submit">{editingId ? "Save changes" : "Add note"}</button>
           </div>
         </form>
+      </section>
+
+      <section className="investigation-section user-notes-section" aria-labelledby="user-notes-title">
+        <div className="investigation-section-heading"><div><span className="section-kicker">CASE NOTES</span><h4 id="user-notes-title">Your notes</h4></div></div>
+        <label className="note-field"><span>Private notes for this case</span><textarea rows={4} value={caseData.userNotes} onChange={(event) => onUserNotesChange(event.target.value)} placeholder="What would you like to remember?" /></label>
       </section>
     </section>
   );

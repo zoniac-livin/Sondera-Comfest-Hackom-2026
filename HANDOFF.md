@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: Phase 5 — Investigate tools complete
+- Current phase/sub-task: Phase 6 — local case storage complete
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: `f185a5e phase-4: submit and inspect ui`; current Phase 5 engine and Investigate work is uncommitted at owner's request.
+- Last commit: Owner confirmed Phase 5 and its UI fixes are committed; current Phase 6 work is uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -31,7 +31,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Owner confirmed Phase 3 is verified and committed. |
 | 4 | Done | Submit and Inspect UI wired to the local engine; two engine refinements and regression tests added. |
 | 5 | Done | Context-based Missing-Proof questions, Context Clock, and in-memory evidence-note CRUD; Phase 6 persistence is not included. |
-| 6 | Not started | Storage. |
+| 6 | Done | Versioned localStorage autosave/restore, recovery/reset, save status, new case, delete all, and case revision events. |
 | 7 | Not started | Decision Receipt. |
 | 8 | Not started | Polish and hardening. |
 | 9 | Not started | Demo readiness. |
@@ -41,6 +41,8 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/App.tsx`: app shell, Submit, and Inspect orchestration.
 - `src/components/ui/stepper.tsx`: reusable journey stepper.
 - `src/components/Investigation.tsx`: Phase 5 questions, date clock/timeline, and evidence-note controls.
+- `src/storage/index.ts`: versioned local JSON storage, schema validation, safe load/save/clear operations.
+- `src/storage/index.test.ts`: storage round trip, corrupt JSON, schema mismatch, and storage exception coverage.
 - `src/types.ts`: shared data types.
 - `src/styles.css`: palette, typography, responsive shell, reduced motion.
 - `src/main.tsx`: React entry and local font imports.
@@ -76,6 +78,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Uses the design-system palette and self-hosted fonts with severity icons plus text labels; body-text contrast calculations exceed WCAG AA on both page and panel surfaces. | Required Section 6A accessibility and visual design. |
 | 2026-10-16 | Added Missing-Proof questions, date warnings/timeline, and session-only evidence-note editing; invalid source URLs warn but do not block saving. | Phase 5 scope; no URL is fetched and autosave remains in Phase 6. |
 | 2026-10-16 | Expanded low-severity contact-switch phrases and corrected singular/plural “non-info observation” wording. | Owner-requested small fixes before Phase 5. |
+| 2026-10-16 | Added Phase 6 storage using a versioned JSON blob in localStorage because Dexie is not installed; cases autosave after 500 ms, restore on load, and expose recovery/reset and delete-all actions. | Approved fallback in Section 5.11; no dependency was added. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -92,7 +95,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Lint: `npm run lint`
 - Analyze: `npm run analyze -- "<text or url>"`
 - Build: `npm run build`
-- Latest results: typecheck passed; tests passed (9 files, 123 tests); build passed; lint passed. Vite dev server started successfully. Context Clock tests cover invalid, future, old, inconsistent, and delayed dates; Missing-Proof tests cover ordering, the six-question cap, and the always-present author prompt.
+- Latest results: Phase 6 typecheck, tests (10 files, 129 tests), build, and lint passed. Vite dev server was previously started successfully. Context Clock tests cover invalid, future, old, inconsistent, and delayed dates; Missing-Proof tests cover ordering, the six-question cap, and the always-present author prompt.
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
@@ -102,6 +105,8 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `npm run typecheck`: passed after Phase 2 changes.
 - `npm run test`: passed, 2 files and 44 tests (43 URL cases plus the Phase 1 smoke test).
 - `npm run build`: passed with Vite 6.4.4.
+- Phase 6: `npm run typecheck`, `npm run test` (10 files, 129 tests), `npm run build`, and `npm run lint` all passed.
+- Phase 6 tests cover versioned save/restore, corrupt JSON, schema mismatch, read/write/delete exceptions, app autosave and restore, and delete confirmation.
 - Phase 3: typecheck, tests (7 files, 88 tests), build, and lint all passed. The sample CLI invocation returned structured JSON with evidence strings/spans and all seven unavailable-check disclosures.
 - Phase 2 commit `b41398e phase-2: url engine` is recorded in the repository history; the owner confirmed Phase 3 was committed after it.
 - No network access was added to the URL analyzer; all parsing uses the built-in `URL` and `URLSearchParams` APIs and makes no fetch/open calls.
@@ -115,21 +120,19 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Contrast calculation from the configured palette and 72% dim-text mix passed WCAG AA for all normal-size text tokens on both `--bg` and `--surface` (minimum 5.20:1 for high severity on surface).
 - An in-app browser preview timed out connecting to localhost during Phase 4; Phase 5 UI behavior was verified through UI tests and the production build.
 - Phase 5 targeted UI tests passed for checked questions, date updates, invalid-URL warnings, note CRUD, relationship counts, and repost caveats.
-- Current git status contains Phase 5 engine/UI/tests/styles and this handoff update; no commit was made.
+- Owner confirmed Phase 5 and its UI fixes were committed. Current git status contains Phase 6 app/storage/tests/styles and this handoff update; no commit was made.
 
 ## 11. Known bugs, gaps and risks
 - Phase 1B is deferred until Gateway Flow source is added.
 - Inspect screen highlights rule evidence with underline and icon; cards show severity icon and label and sort high-to-info. Unknown checks remain separate.
 - Registrable-domain extraction is a documented guess based on a small multi-part suffix list, not a public suffix database.
 - Brand rules use a small local list and can miss brands or legitimate domain conventions outside that list. The official-domain map only suppresses lookalike flags; it does not verify domains.
-- Phase 5 evidence notes, checked questions, and dates are kept in React memory only; autosave and restore are Phase 6.
-- Phase 5 evidence notes and date/question state are in React memory only. Autosave/restore is scheduled for Phase 6.
+- Phase 6 stores one active case in a versioned localStorage JSON blob. Browser storage limits/unavailability can prevent persistence; the app reports this and retains working state in memory.
 
 ## 12. Next steps
-1. Wait for owner instruction before starting Phase 6.
+1. Wait for owner instruction before starting Phase 7.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
-3. Keep all investigation data in memory until Phase 6 storage is requested.
-4. When Phase 6 local autosave is implemented, replace “Notes stay in this page session.” with copy that accurately describes local autosave.
+3. Phase 6 completed local autosave; do not start Phase 7 until the owner requests it.
 
 ## 13. Open questions for the owner
 - None for Phase 5. Phase 1B source remains deferred at the owner's request.
