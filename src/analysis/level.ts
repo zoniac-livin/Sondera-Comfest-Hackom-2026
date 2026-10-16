@@ -3,6 +3,15 @@ import type { Indicator } from "../types";
 export type AnalysisLevel = "none-found" | "some-indicators" | "multiple-indicators" | "strong-indicators";
 export interface LevelResult { level: AnalysisLevel; explanation: string }
 
+export function levelLabel(level: AnalysisLevel): string {
+  switch (level) {
+    case "none-found": return "No indicators found";
+    case "some-indicators": return "Some indicators";
+    case "multiple-indicators": return "Notable indicators";
+    case "strong-indicators": return "Strong indicators";
+  }
+}
+
 const LIMITATION_NOTICE = "Automated checks can miss threats and can flag legitimate content.";
 
 /** Derive a qualitative level from non-informational observations only. */

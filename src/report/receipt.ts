@@ -1,5 +1,6 @@
 import { analyzeContextDates } from "@/analysis/contextClock";
 import { getUnavailableChecks } from "@/analysis/unavailable";
+import { levelLabel } from "@/analysis/level";
 import type { AnalysisLevel, Case, Indicator, Severity } from "@/types";
 
 export const RECEIPT_SCHEMA_VERSION = 1;
@@ -131,7 +132,7 @@ export function generateReceiptMarkdown(caseData: Case, generatedAt?: string): s
     for (const finding of group) lines.push(`- **${finding.title}** (${finding.id})\n  - Explanation: ${finding.explanation}\n  - Exact evidence: ${fenced(finding.evidence)}`);
     lines.push("");
   }
-  lines.push("## Overall level", receipt.level ? `**${receipt.level.value}** — ${receipt.level.explanation}` : "No analysis has been run for this case yet, so no overall level is available.", "", "## Evidence references");
+  lines.push("## Overall level", receipt.level ? `**${levelLabel(receipt.level.value)}** — ${receipt.level.explanation}` : "No analysis has been run for this case yet, so no overall level is available.", "", "## Evidence references");
   if (!receipt.evidence.length) lines.push("No evidence notes have been added.");
   else for (const note of receipt.evidence) lines.push(`### Evidence note\n- **Title:** ${fenced(note.title || "Untitled source")}\n- **Source URL:** ${fenced(note.sourceUrl || "Not provided")}\n- **Relationship:** ${note.supports}\n- **Source type:** ${note.kind}\n- **Date accessed:** ${escapeMarkdown(note.accessedOn)}\n- **Note:** ${fenced(note.note)}`);
   lines.push("", "## Unresolved questions");

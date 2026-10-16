@@ -1,6 +1,7 @@
 import { ArrowLeft, Download, Info, Printer, ShieldAlert, TriangleAlert, CircleAlert } from "lucide-react";
 import { useMemo, useState } from "react";
 import { createReceiptData, generateReceiptJson, generateReceiptMarkdown, receiptFilename } from "@/report/receipt";
+import { levelLabel } from "@/analysis/level";
 import type { Case, Severity } from "@/types";
 
 const groups: Array<{ severity: Severity; label: string; Icon: typeof ShieldAlert }> = [
@@ -27,19 +28,34 @@ function download(content: string, filename: string, mimeType: string): void {
 
 export function DecisionReceipt({ caseData, onBack }: { caseData: Case; onBack: () => void }) {
   const [generatedAt] = useState(() => new Date().toISOString());
+  const [exportStatus, setExportStatus] = useState("");
   const receipt = useMemo(() => createReceiptData(caseData, generatedAt), [caseData, generatedAt]);
-  const md = () => download(generateReceiptMarkdown(caseData, generatedAt), receiptFilename(caseData.id, "md"), "text/markdown");
-  const json = () => download(generateReceiptJson(caseData, generatedAt), receiptFilename(caseData.id, "json"), "application/json");
+  const prepareDownload = (format: "md" | "json") => {
+    setExportStatus("");
+    try {
+      const content = format === "md" ? generateReceiptMarkdown(caseData, generatedAt) : generateReceiptJson(caseData, generatedAt);
+      download(content, receiptFilename(caseData.id, format), format === "md" ? "text/markdown" : "application/json");
+      setExportStatus(`${format.toUpperCase()} download prepared.`);
+    } catch {
+      setExportStatus("This download could not be prepared in this browser. Try Print / Save as PDF instead.");
+    }
+  };
+  const print = () => {
+    setExportStatus("");
+    try { window.print(); }
+    catch { setExportStatus("The print dialog could not be opened. Try a Markdown or JSON download instead."); }
+  };
 
   return (
     <article className="receipt-panel" aria-labelledby="receipt-title">
       <div className="receipt-actions no-print">
         <button className="text-button" type="button" onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> Back to investigate</button>
         <div>
-          <button className="secondary-button" type="button" onClick={() => window.print()}><Printer size={16} aria-hidden="true" /> Print / Save as PDF</button>
-          <button className="secondary-button" type="button" onClick={md}><Download size={16} aria-hidden="true" /> Markdown</button>
-          <button className="secondary-button" type="button" onClick={json}><Download size={16} aria-hidden="true" /> JSON</button>
+          <button className="secondary-button" type="button" onClick={print}><Printer size={16} aria-hidden="true" /> Print / Save as PDF</button>
+          <button className="secondary-button" type="button" onClick={() => prepareDownload("md")}><Download size={16} aria-hidden="true" /> Markdown</button>
+          <button className="secondary-button" type="button" onClick={() => prepareDownload("json")}><Download size={16} aria-hidden="true" /> JSON</button>
         </div>
+        <p className="export-status" role="status" aria-live="polite">{exportStatus}</p>
       </div>
 
       <header className="receipt-heading">
@@ -79,7 +95,7 @@ export function DecisionReceipt({ caseData, onBack }: { caseData: Case; onBack: 
 
       <section className="receipt-section" aria-labelledby="receipt-level-title">
         <h4 id="receipt-level-title">Overall level</h4>
-        {receipt.level ? <><p className={`receipt-level level-${receipt.level.value}`}>{receipt.level.value === "none-found" ? <Info size={16} aria-hidden="true" /> : receipt.level.value === "some-indicators" ? <CircleAlert size={16} aria-hidden="true" /> : receipt.level.value === "multiple-indicators" ? <TriangleAlert size={16} aria-hidden="true" /> : <ShieldAlert size={16} aria-hidden="true" />}<strong>{receipt.level.value.replace(/-/g, " ")}</strong></p><p>{receipt.level.explanation}</p></> : <p>No overall level is available until analysis is run.</p>}
+        {receipt.level ? <><p className={`receipt-level level-${receipt.level.value}`}>{receipt.level.value === "none-found" ? <Info size={16} aria-hidden="true" /> : receipt.level.value === "some-indicators" ? <CircleAlert size={16} aria-hidden="true" /> : receipt.level.value === "multiple-indicators" ? <TriangleAlert size={16} aria-hidden="true" /> : <ShieldAlert size={16} aria-hidden="true" />}<strong>{levelLabel(receipt.level.value)}</strong></p><p>{receipt.level.explanation}</p></> : <p>No overall level is available until analysis is run.</p>}
       </section>
 
       <section className="receipt-section" aria-labelledby="receipt-evidence-title">

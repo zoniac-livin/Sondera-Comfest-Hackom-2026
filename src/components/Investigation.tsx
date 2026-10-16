@@ -161,6 +161,7 @@ export function Investigation({ analysis, hidden, caseData, onEvidenceChange, on
           <span><strong>{supportCounts.contradicts}</strong> contradicts</span>
           <span><strong>{supportCounts.unclear}</strong> unclear</span>
         </div>
+        {notes.length === 0 && <p className="section-empty evidence-empty">No evidence notes yet. Add a source below if you find one worth recording.</p>}
         {repostCount > 1 && <p className="repost-warning"><AlertCircle size={16} aria-hidden="true" />Repeated copies are not independent confirmation.</p>}
 
         {notes.length > 0 && (

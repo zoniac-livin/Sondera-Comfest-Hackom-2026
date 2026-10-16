@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: URL brand coverage and regression battery complete; Phase 8 not started
+- Current phase/sub-task: Phase 8 — polish and hardening complete; Phase 9 not started
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: Owner confirmed Phase 7 is verified and committed; current URL brand coverage changes are uncommitted at owner's request.
+- Last commit: Owner confirmed the Phase 7 and URL brand-list work is verified and committed; Phase 8 changes are uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -27,13 +27,13 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 |---|---|---|
 | 1 | Done | Owner confirmed Phase 1 verified and committed. |
 | 1B | Deferred | Owner asked to defer until Gateway Flow source is added to the repo. |
-| 2 | Done | URL parser, deterministic indicators, brand rules, and URL regression tests implemented; current brand-battery changes are uncommitted. |
+| 2 | Done | URL parser, deterministic indicators, 118-brand official-domain reference, and URL regression battery are committed and verified. |
 | 3 | Done | Message analysis, level assessment, unavailable-check disclosures, orchestration, fixtures, tests, and JSON CLI implemented. Owner confirmed Phase 3 is verified and committed. |
 | 4 | Done | Submit and Inspect UI wired to the local engine; two engine refinements and regression tests added. |
 | 5 | Done | Context-based Missing-Proof questions, Context Clock, and in-memory evidence-note CRUD; Phase 6 persistence is not included. |
 | 6 | Done | Versioned localStorage autosave/restore, recovery/reset, save status, new case, delete all, and case revision events. |
 | 7 | Done | Ordered receipt view, level-aware actions, print/PDF styling, Markdown and schema-versioned JSON exports. |
-| 8 | Not started | Polish and hardening. |
+| 8 | Done | Accessibility, keyboard and empty states, human-readable level labels, robust-input tests, copy/privacy review, README, and responsive CSS refinements. Visual browser inspection was unavailable because the local preview could not be reached from the browser tool. |
 | 9 | Not started | Demo readiness. |
 
 ## 6. File map
@@ -50,12 +50,14 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/styles.css`: palette, typography, responsive shell, reduced motion.
 - `src/main.tsx`: React entry and local font imports.
 - `src/App.test.tsx`: Submit, Inspect, and Investigate UI interaction tests.
+- `README.md`: architecture, local run/check commands, limitations, and unimplemented roadmap items.
 - `src/App.tsx`, `src/styles.css`, `src/App.test.tsx`: Phase 4 Submit/Inspect app screens, responsive case-file styling, and interaction tests.
 - `src/analysis/url.ts`: pure URL parser and local indicator rules; never fetches URLs.
 - `src/analysis/brands.ts`: 118 India/global brand names and official-domain exclusions, including `onlinesbi.sbi`, `netbanking.hdfcbank.com`, and `incometax.gov.in`.
 - `src/analysis/url.test.ts`: URL-rule tests (63 cases), including the requested 8 legitimate and 6 suspicious URL battery through the full analyzer.
 - `src/analysis/message.ts`, `level.ts`, `unavailable.ts`, `missingProof.ts`, `contextClock.ts`, `index.ts`: local analysis pipeline and Phase 5 pure helpers; inputs are not fetched or transmitted.
 - `src/analysis/message.test.ts`, `level.test.ts`, `unavailable.test.ts`, `missingProof.test.ts`, `contextClock.test.ts`, `index.test.ts`: engine and helper tests.
+- `src/analysis/index.test.ts`: robustness coverage for empty input, 20,000-character and Unicode-heavy messages, and 50/51 embedded URLs.
 - `src/fixtures/samples.ts` and `src/fixtures/samples.test.ts`: representative message samples and benign-message checks.
 - `scripts/analyze.mjs`: local JSON CLI, invoked with `npm run analyze -- "<text or url>"`.
 - `src/analysis/url.ts` adds `url.brand-in-domain` for whole hyphen-separated known-brand tokens in non-official registrable domains. `src/analysis/message.ts` matches organization claims only when a contextual mention is paired with a request or link.
@@ -84,6 +86,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Added Phase 6 storage using a versioned JSON blob in localStorage because Dexie is not installed; cases autosave after 500 ms, restore on load, and expose recovery/reset and delete-all actions. | Approved fallback in Section 5.11; no dependency was added. |
 | 2026-10-16 | Replaced the final-step placeholder with an ordered Decision Receipt, local recommended actions, print stylesheet, Markdown export, and schema-versioned JSON export. | Owner-requested Phase 7 scope; no external network calls or Phase 8 work. |
 | 2026-10-16 | Expanded known brands to 118 entries and added explicit official domains; narrowed brand-in-path matches to whole tokens and added Punycode confusable lookalike detection. | Owner-requested official-domain coverage and suspicious URL battery, while keeping legitimate cases at `none-found` and avoiding substring noise such as `/anthropics`. |
+| 2026-10-16 | Completed Phase 8 polish: human-readable result labels, all-step empty states and keyboard access, an analysis live announcement, labeled-control assertions, local example note, download failure feedback, and small-screen receipt-action wrapping. | Owner-requested accessibility, robustness, responsive, copy, and README hardening. The built-in preview port was unreachable from the browser tool, so viewport review was static rather than visual. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -100,7 +103,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Lint: `npm run lint`
 - Analyze: `npm run analyze -- "<text or url>"`
 - Build: `npm run build`
-- Latest results: URL battery changes: typecheck passed; tests passed (11 files, 149 tests); build passed; lint passed. The targeted URL suite passed with 63 tests. Vite dev server was previously started successfully. Context Clock tests cover invalid, future, old, inconsistent, and delayed dates; Missing-Proof tests cover ordering, the six-question cap, and the always-present author prompt.
+- Latest results: Phase 8 `npm run typecheck`, `npm test` (11 files, 162 tests), `npm run build`, and `npm run lint` passed. Production bundle: JS 230.15 kB (72.02 kB gzip), CSS 46.69 kB (8.99 kB gzip), HTML 0.58 kB (0.37 kB gzip). Responsive CSS was statically reviewed at the 360px, 768px, and 1280px layouts; browser rendering could not be reached from the browser tool.
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
@@ -113,7 +116,8 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Phase 6: `npm run typecheck`, `npm run test` (10 files, 129 tests), `npm run build`, and `npm run lint` all passed.
 - Phase 6 tests cover versioned save/restore, corrupt JSON, schema mismatch, read/write/delete exceptions, app autosave and restore, and delete confirmation.
 - Phase 7: `npm run typecheck`, `npm run test` (11 files, 134 tests), `npm run build`, and `npm run lint` all passed. Receipt export tests cover the 1,000-character limit, empty evidence, absent analysis, and special characters; app tests cover opening the fourth step.
-- URL coverage update: Added a 118-brand set, explicit SBI/HDFC/Income Tax domains, whole-token brand path matching, and Punycode confusable normalization for known-brand lookalikes. Exact requested battery: all 8 legitimate URLs had no non-info indicators and overall `none-found`; all 6 suspicious URLs had at least one high indicator. Before the fix, `https://xn--pple-43d.com` was known to yield only the generic medium Punycode observation; it now also yields a high lookalike-brand indicator. Typecheck, all 149 tests, build, and lint passed. No commit was made.
+- Phase 8: `npm run typecheck`, `npm test` (11 files, 162 tests), `npm run build`, and `npm run lint` passed. Added empty-input, no-analysis view, empty-evidence, labeled-input, keyboard step navigation, analysis live announcement, human-level label/export, clean-looking domain, export failure, 20,000-character, Unicode-heavy, and 50/51 URL tests. Level text/background ratios measured 16.56:1 and 13.64:1 for primary text; 9.04:1 and 7.77:1 for dim text; 6.58:1 and 5.42:1 for accent; 8.82:1 and 7.27:1 for medium; 6.32:1 and 5.20:1 for high, on page and panel backgrounds respectively. Local browser preview attempts timed out; viewport validation was limited to static CSS review and responsive rules.
+- URL coverage update: Added a 118-brand set, explicit SBI/HDFC/Income Tax domains, whole-token brand path matching, and Punycode confusable normalization for known-brand lookalikes. The owner subsequently confirmed this work was verified and committed. The exact requested battery had all 8 legitimate URLs at `none-found` and all 6 suspicious URLs with at least one high indicator.
 - Phase 3: typecheck, tests (7 files, 88 tests), build, and lint all passed. The sample CLI invocation returned structured JSON with evidence strings/spans and all seven unavailable-check disclosures.
 - Phase 2 commit `b41398e phase-2: url engine` is recorded in the repository history; the owner confirmed Phase 3 was committed after it.
 - No network access was added to the URL analyzer; all parsing uses the built-in `URL` and `URLSearchParams` APIs and makes no fetch/open calls.
@@ -127,7 +131,7 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Contrast calculation from the configured palette and 72% dim-text mix passed WCAG AA for all normal-size text tokens on both `--bg` and `--surface` (minimum 5.20:1 for high severity on surface).
 - An in-app browser preview timed out connecting to localhost during Phase 4; Phase 5 UI behavior was verified through UI tests and the production build.
 - Phase 5 targeted UI tests passed for checked questions, date updates, invalid-URL warnings, note CRUD, relationship counts, and repost caveats.
-- Owner confirmed Phase 5 and its UI fixes were committed, then confirmed Phase 6 was verified and committed. Current git status contains Phase 7 app/report/tests/styles and this handoff update; no commit was made.
+- Owner confirmed Phase 5 and its UI fixes were committed, then confirmed Phase 6, Phase 7, and URL brand coverage were verified and committed. Phase 8 changes and this handoff update are uncommitted at the owner's request.
 
 ## 11. Known bugs, gaps and risks
 - Phase 1B is deferred until Gateway Flow source is added.
@@ -137,9 +141,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Phase 6 stores one active case in a versioned localStorage JSON blob. Browser storage limits/unavailability can prevent persistence; the app reports this and retains working state in memory.
 
 ## 12. Next steps
-1. Wait for owner instruction before starting Phase 8.
+1. Wait for owner instruction before starting Phase 9.
 2. Keep Phase 1B deferred until Gateway Flow source is supplied.
-3. Phase 7 completed the Decision Receipt; do not start Phase 8 until the owner requests it.
+3. Phase 8 is complete; do not start Phase 9 until the owner requests it.
 
 ## 13. Open questions for the owner
-- None for Phase 5. Phase 1B source remains deferred at the owner's request.
+- None. Phase 1B source remains deferred at the owner's request.

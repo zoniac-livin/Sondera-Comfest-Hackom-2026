@@ -6,6 +6,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { analyze } from "@/analysis";
 import { analyzeUrl } from "@/analysis/url";
+import { levelLabel } from "@/analysis/level";
 import { Investigation } from "@/components/Investigation";
 import { DecisionReceipt } from "@/components/DecisionReceipt";
 import { Stepper } from "@/components/ui/stepper";
@@ -47,7 +48,10 @@ const examples = [
     label: "Viral forward",
     text: "Forward this to 10 people! A message says schools will close tomorrow, but it doesn't name a source.",
   },
+  { label: "Clean-looking domain", text: "https://fastdeals-support.com/refund" },
 ];
+
+const CLEAN_DOMAIN_EXAMPLE = "https://fastdeals-support.com/refund";
 
 const severityMeta: Record<Severity, { label: string; Icon: LucideIcon; className: string }> = {
   high: { label: "High", Icon: ShieldAlert, className: "severity-high" },
@@ -59,7 +63,7 @@ const severityMeta: Record<Severity, { label: string; Icon: LucideIcon; classNam
 const levelMeta: Record<Analysis["level"], { label: string; Icon: LucideIcon; className: string }> = {
   "none-found": { label: "No indicators found", Icon: Info, className: "level-none" },
   "some-indicators": { label: "Some indicators", Icon: CircleAlert, className: "severity-low" },
-  "multiple-indicators": { label: "Multiple indicators", Icon: TriangleAlert, className: "severity-medium" },
+  "multiple-indicators": { label: "Notable indicators", Icon: TriangleAlert, className: "severity-medium" },
   "strong-indicators": { label: "Strong indicators", Icon: ShieldAlert, className: "severity-high" },
 };
 
@@ -162,6 +166,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [formError, setFormError] = useState("");
+  const [analysisAnnouncement, setAnalysisAnnouncement] = useState("");
   const skipSave = useRef(false);
   const input = caseData.input;
   const analysis = caseData.analysis ?? null;
@@ -184,13 +189,18 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [caseData, recoveryMessage]);
 
-  const updateInput = (value: string) => setCaseData((current) => ({ ...current, input: value, analysis: undefined, updatedAt: new Date().toISOString() }));
+  const updateInput = (value: string) => {
+    setAnalysisAnnouncement("");
+    setCaseData((current) => ({ ...current, input: value, analysis: undefined, updatedAt: new Date().toISOString() }));
+  };
   const updateTypeChoice = (choice: TypeChoice) => {
+    setAnalysisAnnouncement("");
     setTypeChoice(choice);
     setCaseData((current) => ({ ...current, inputType: choice === "auto" ? inferredType : choice, analysis: undefined, updatedAt: new Date().toISOString() }));
   };
   const startNewCase = () => {
     setCaseData(createCase()); setTypeChoice("auto"); setRecoveryMessage(""); setSaveState("saving"); setActiveStep(0); setFormError("");
+    setAnalysisAnnouncement("");
   };
   const resetStoredData = () => {
     try {
@@ -210,6 +220,8 @@ export default function App() {
     const selectedType = typeChoice === "auto" ? inferredType : typeChoice;
     const result = analyze(input, selectedType);
     setCaseData((current) => addRevision({ ...current, inputType: selectedType, analysis: result }, "Analysis run"));
+    const label = levelLabel(result.level);
+    setAnalysisAnnouncement(`Analysis complete. ${label}. ${result.indicators.filter((item) => item.severity !== "info").length} non-info indicators. ${result.unavailableChecks.length} checks unavailable.`);
     setFormError("");
     setActiveStep(1);
   };
@@ -258,7 +270,7 @@ export default function App() {
             <span className="file-tag">NO. 0001 <MessageSquareText size={15} aria-hidden="true" /></span>
           </div>
           {recoveryMessage && <div className="storage-warning" role="status"><span>{recoveryMessage}</span>{!recoveryMessage.includes("could not be cleared") && <button className="quiet-button" type="button" onClick={resetStoredData}>Reset stored data</button>}</div>}
-          <Stepper steps={steps} activeIndex={activeStep} availableThrough={analysis ? 3 : 0} onStepClick={setActiveStep} />
+          <Stepper steps={steps} activeIndex={activeStep} availableThrough={3} onStepClick={setActiveStep} />
 
           {activeStep === 0 && (
             <section className="submit-panel" aria-labelledby="submit-title">
@@ -312,8 +324,16 @@ export default function App() {
             </section>
           )}
 
+          {activeStep === 1 && !analysis && (
+            <section className="empty-step-state" aria-labelledby="inspect-empty-title">
+              <Info size={20} aria-hidden="true" />
+              <div><h3 id="inspect-empty-title">No analysis yet</h3><p>Submit a message, link, or claim, then choose “Inspect input” to see local observations and what could not be checked.</p><button className="secondary-button" type="button" onClick={() => setActiveStep(0)}>Go to Submit</button></div>
+            </section>
+          )}
+
           {activeStep === 1 && analysis && (
             <section className="inspect-panel" aria-labelledby="inspect-title">
+              <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{analysisAnnouncement}</p>
               <div className="panel-label-row"><div><span className="panel-kicker">STEP 02 / 04 · {analysis.inputType.toUpperCase()}</span><h3 id="inspect-title">What the local checks observed</h3></div><button className="text-button edit-button" onClick={editInput} type="button"><ArrowLeft size={15} aria-hidden="true" /> Edit input</button></div>
 
               <div className="level-panel">
@@ -330,11 +350,14 @@ export default function App() {
               </section>
 
               <section className="observed-section" aria-labelledby="observed-title">
-                <div className="section-title-row"><div><span className="section-kicker">OBSERVED</span><h4 id="observed-title">Indicators from local rules</h4></div><span className="count-tag">{analysis.indicators.length} {analysis.indicators.length === 1 ? "FINDING" : "FINDINGS"}</span></div>
-                {analysis.indicators.length ? (
+                <div className="section-title-row"><div><span className="section-kicker">OBSERVED</span><h4 id="observed-title">Indicators from local rules</h4></div><span className="count-tag">{analysis.indicators.filter((item) => item.severity !== "info").length} {analysis.indicators.filter((item) => item.severity !== "info").length === 1 ? "INDICATOR" : "INDICATORS"}</span></div>
+                {analysis.indicators.some((item) => item.severity !== "info") ? (
                   <div className="indicator-list">{sortedIndicators(analysis.indicators).map((indicator, index) => <IndicatorCard key={`${indicator.id}-${indicator.span?.start ?? index}-${index}`} indicator={indicator} index={index} />)}</div>
                 ) : (
-                  <div className="empty-findings"><Info size={20} aria-hidden="true" /><p>These local checks found no indicators. This does not mean the content is genuine or safe.</p></div>
+                  <div className="empty-findings"><Info size={20} aria-hidden="true" /><div><p>No indicators above info were found by these local checks.</p>
+                    {input.trim() === CLEAN_DOMAIN_EXAMPLE && <p className="clean-domain-note">Local checks can’t judge a domain like this. Use the Missing-Proof questions to verify it yourself.</p>}
+                    {analysis.indicators.length > 0 && <details className="info-observations"><summary>Show {analysis.indicators.length} informational {analysis.indicators.length === 1 ? "observation" : "observations"}</summary><div className="indicator-list">{sortedIndicators(analysis.indicators).map((indicator, index) => <IndicatorCard key={`${indicator.id}-${index}`} indicator={indicator} index={index} />)}</div></details>}
+                  </div></div>
                 )}
               </section>
 
@@ -349,6 +372,7 @@ export default function App() {
           )}
 
           {analysis && <Investigation analysis={analysis} hidden={activeStep !== 2} caseData={caseData} onEvidenceChange={updateEvidence} onDatesChange={updateDates} onCheckedQuestionsChange={updateCheckedQuestions} onUserNotesChange={updateUserNotes} />}
+          {activeStep === 2 && !analysis && <section className="empty-step-state" aria-labelledby="investigate-empty-title"><CircleHelp size={20} aria-hidden="true" /><div><h3 id="investigate-empty-title">Nothing to investigate yet</h3><p>Run local checks first. Then you can review questions, add evidence notes, and compare dates.</p><button className="secondary-button" type="button" onClick={() => setActiveStep(0)}>Go to Submit</button></div></section>}
           {activeStep === 3 && <DecisionReceipt caseData={caseData} onBack={() => setActiveStep(2)} />}
 
           <aside className="limitation" aria-label="Important limitation">

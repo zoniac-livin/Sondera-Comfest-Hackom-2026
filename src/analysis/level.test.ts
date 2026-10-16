@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessLevel } from "./level";
+import { assessLevel, levelLabel } from "./level";
 import type { Indicator, Severity } from "../types";
 
 function indicators(...severities: Severity[]): Indicator[] {
@@ -11,6 +11,19 @@ function indicators(...severities: Severity[]): Indicator[] {
 }
 
 describe("assessLevel", () => {
+  it.each([
+    ["none-found", "No indicators found"],
+    ["some-indicators", "Some indicators"],
+    ["multiple-indicators", "Notable indicators"],
+    ["strong-indicators", "Strong indicators"],
+  ] as const)("uses an accurate human-readable label for %s", (level, label) => {
+    expect(levelLabel(level)).toBe(label);
+  });
+  it("labels one high indicator as notable and two as strong", () => {
+    expect(levelLabel(assessLevel(indicators("high")).level)).toBe("Notable indicators");
+    expect(levelLabel(assessLevel(indicators("high", "high")).level)).toBe("Strong indicators");
+  });
+
   it("ignores info-only indicators and uses the required none-found wording", () => {
     const result = assessLevel(indicators("info", "info"));
     expect(result.level).toBe("none-found");

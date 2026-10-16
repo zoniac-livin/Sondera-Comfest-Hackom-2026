@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateReceiptJson, generateReceiptMarkdown } from "./receipt";
+import { analyze } from "@/analysis";
 import type { Case } from "@/types";
 
 function makeCase(input = ""): Case {
@@ -44,5 +45,15 @@ describe("Decision Receipt exports", () => {
     const json = JSON.parse(generateReceiptJson(makeCase(input)));
     expect(markdown).toContain("````text\n" + input + "\n````");
     expect(json.originalInput).toBe(input);
+  });
+
+  it("uses human-readable level labels in the receipt while keeping JSON values stable", () => {
+    const item = makeCase("Dear customer");
+    item.analysis = analyze(item.input, "message");
+    const markdown = generateReceiptMarkdown(item);
+    const json = JSON.parse(generateReceiptJson(item));
+    expect(json.level.value).toBe("some-indicators");
+    expect(markdown).toContain("**Some indicators**");
+    expect(markdown).not.toContain("**some-indicators**");
   });
 });
