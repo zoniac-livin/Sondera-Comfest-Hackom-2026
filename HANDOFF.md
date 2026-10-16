@@ -2,10 +2,10 @@
 
 ## 1. Snapshot
 - Date/time: 2026-10-16, Asia/Kolkata
-- Current phase/sub-task: Phase 1 — foundation fixes (Vitest/Vite dependency upgrade blocked on npm registry DNS)
+- Current phase/sub-task: Phase 2 — URL engine complete
 - Estimated completion: MVP not estimated; hackathon submission deadline in source prompt is 2026-10-17 09:30 IST
 - Branch: `main`
-- Last commit: Initial repository commit `60a5743`; user asked not to commit current changes.
+- Last commit: `0728909 phase-1: foundation`; Phase 2 changes are uncommitted at owner's request.
 
 ## 2. Project in one paragraph
 Sondera is a privacy-first browser app for examining suspicious messages, links, and online claims through transparent local checks, with observations, unknowns, next steps, evidence, and a printable decision record. The supplied prompt lists idea finalization as 11:30 AM IST on Oct 16, 2026 and project submission as 9:30 AM IST on Oct 17, 2026.
@@ -19,13 +19,15 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - Palette: bg `#121a21`, surface `#1d2b36`, accent `#82a880`, muted `#385468`, text `#e9fcfc`; severity medium `#d9b26f`, high `#e2806f`.
 - Fonts: self-host Anton for headings and Alegreya Sans for body.
 - Source prompt Appendix A and B contain placeholders only; no Gateway Flow component code was provided.
+- URL lookalikes: only brand names with 5+ letters, at most one spelling edit or a listed common character substitution; registered official domains are excluded.
+- `url.keyword-path` is informational (`info`) and therefore does not count toward any overall level.
 
 ## 5. Phase status
 | Phase | Status | Notes |
 |---|---|---|
-| 1 | In progress | React import fixed; smoke test passes. Vitest/Vite type mismatch remains because registry install and local dedupe are blocked. |
-| 1B | Not started | Landing page and Gateway Flow remain. |
-| 2 | Not started | URL analyzer and tests. |
+| 1 | Done | Owner confirmed Phase 1 verified and committed. |
+| 1B | Deferred | Owner asked to defer until Gateway Flow source is added to the repo. |
+| 2 | Done | URL parser, deterministic indicators, brand rules, and 43 URL tests implemented; typecheck, tests, and build pass. |
 | 3 | Not started | Message analyzer and tests. |
 | 4 | Not started | Submit and Inspect UI. |
 | 5 | Not started | Investigate tools. |
@@ -42,6 +44,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 - `src/styles.css`: palette, typography, responsive shell, reduced motion.
 - `src/main.tsx`: React entry and local font imports.
 - `src/App.test.tsx`: Phase 1 shell smoke test.
+- `src/analysis/url.ts`: pure URL parser and local indicator rules; never fetches URLs.
+- `src/analysis/brands.ts`: compact India/global brand list and official-domain exclusions.
+- `src/analysis/url.test.ts`: URL-rule tests (43 cases).
 - `vite.config.ts`, TypeScript configs, Tailwind/PostCSS and `components.json`: build/tool configuration.
 
 ## 7. Decisions and deviations log
@@ -52,6 +57,9 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 | 2026-10-16 | Used hand-built shadcn-style structure rather than CLI initialization. | Keeps the scaffold direct; CLI invocation not attempted because dependency downloads stalled. |
 | 2026-10-16 | Added React default import to `src/main.tsx`. | `React.StrictMode` referenced React in classic TS checking and caused TS2686. |
 | 2026-10-16 | Tailwind scan paths set to `./index.html` and `./src/**/*.{ts,tsx}`. | Match the actual app entry and source extensions. |
+| 2026-10-16 | Phase 1B deferred. | Owner will add Gateway Flow source later; no landing-page work started. |
+| 2026-10-16 | Lookalike matching limited to brand names of at least five letters, one edit, and common substitutions; official domains are excluded. | Owner-requested reduction in false alarms. |
+| 2026-10-16 | `url.keyword-path` uses `info` severity. | Owner-requested; info observations do not count toward overall levels. |
 
 ## 8. Design in use
 - Palette and fonts: see Section 4 and `src/styles.css`.
@@ -61,40 +69,37 @@ Work phase by phase and stop after each phase to report using Section 11 of `doc
 ## 9. Commands
 - Install: `npm install`
 - Dev: `npm run dev`
+- Preview: `npm run preview`
 - Test: `npm run test`
+- Test watch: `npm run test:watch`
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
 - Build: `npm run build`
-- Last known results: pending.
+- Last known results: `npm run typecheck`, `npm run lint`, and `npm run build` passed; `npm run test` passed (2 files, 44 tests: 43 URL cases and one shell smoke test).
 
 ## 10. Verification log
 - Inspected repository: initially contained only Git metadata and `.gitattributes`; clean branch `main` with initial commit `60a5743`.
 - Node v24.19.0 and npm 11.7.0 are available.
 - Dependencies are present in `node_modules` (user-provided state). No full reinstall was run.
-- `npm install -D vitest@^3 --no-audit --no-fund` failed after about 71 seconds with `ENOTFOUND registry.npmjs.org`; package manager did not finish the requested upgrade.
-- `npm ls vite` shows root `vite@6.4.4`, while `vitest@2.1.9` has nested `vite@5.4.21` through `vite-node`.
-- `npm dedupe --offline --no-audit --no-fund` failed with `ENOTCACHED` for `globals`, so the nested Vite copy remains.
-- After adding the React import, `npm run typecheck` reports one remaining TS2769 Vite plugin-type mismatch in `vite.config.ts` (two Vite type identities).
-- `npm run test`: passed, 1 file / 1 test.
-- `npm run build`: failed at the same TS2769 config type mismatch before Vite build.
-- Dev server started on 127.0.0.1:5174 because port 5173 was already occupied. Browser and shell HTTP checks could not access localhost in this environment (connection timeout / socket access denied); visual render not confirmed.
-- CSS has dark palette tokens, Anton and Alegreya Sans font imports, and responsive four-step shell. Tailwind content paths cover `index.html` and TS/TSX sources.
-- `git add -A` failed with `Unable to create .git/index.lock: Permission denied`; repository metadata is not writable in this environment, so no project commit was made.
-- Typecheck, smoke test, lint, build, dev server, browser visual and network-request verification were not run because dependencies are unavailable.
+- Owner confirmed Phase 1 is verified and committed as `0728909`.
+- `npm run typecheck`: passed after Phase 2 changes.
+- `npm run test`: passed, 2 files and 44 tests (43 URL cases plus the Phase 1 smoke test).
+- `npm run build`: passed with Vite 6.4.4.
+- No network access was added to the URL analyzer; all parsing uses the built-in `URL` and `URLSearchParams` APIs and makes no fetch/open calls.
+- Phase 1B remains deferred; Appendix A and B remain placeholders in the source prompt.
+- Git status contains the handoff, Phase 2 source/tests, and `package.json` script additions; no commit was made.
 
 ## 11. Known bugs, gaps and risks
-- Phase 1 remains in progress until Vitest is upgraded/deduped and typecheck/build pass. Environment DNS/network restrictions block registry access.
+- Phase 1B is deferred until Gateway Flow source is added.
 - UI currently has a placeholder submit step; no analysis features are implemented.
-- Appendix A/B source code is missing, making exact Gateway Flow implementation unavailable.
-- Brand edit-distance matching and phrase matching in the prompt may overflag legitimate domains/messages; document any rules and edge cases in later analyzer phases.
+- Registrable-domain extraction is a documented guess based on a small multi-part suffix list, not a public suffix database.
+- Brand rules use a small local list and can miss brands or legitimate domain conventions outside that list. The official-domain map only suppresses lookalike flags; it does not verify domains.
 - Contrast ratios have not yet been measured.
 
 ## 12. Next steps
-1. Run `npm install -D vitest@^3 --no-audit --no-fund` in an environment with npm registry access.
-2. Run `npm ls vite` and `npm dedupe`; confirm one Vite version remains.
-3. Run typecheck, tests, and production build; inspect the app in a browser at 360, 768, and 1280px.
-4. Stop and report Phase 1; wait for explicit approval before Phase 1B.
+1. Wait for owner instruction before starting Phase 3 (message analyzer).
+2. Keep Phase 1B deferred until Gateway Flow source is supplied.
+3. If the owner resumes Phase 1B, apply the required local-only edits and verify no third-party requests.
 
 ## 13. Open questions for the owner
-- Can you provide the actual `gateway-flow.tsx` and `demo.tsx` code if you expect the exact component integration?
-- None required to finish the current foundation phase.
+- None for Phase 2. Phase 1B source remains deferred at the owner's request.
