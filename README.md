@@ -6,8 +6,6 @@ Sondera is a privacy-first web app that helps people examine suspicious messages
 
 Built for **HACKCOM '26**, theme: *Building a Safer Digital World*.
 
-> **Live demo:** `<add your Netlify link here>`
-> **Demo script and judge Q&A:** see [`DEMO.md`](./DEMO.md) *(if present)*
 
 ---
 
